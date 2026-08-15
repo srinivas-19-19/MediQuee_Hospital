@@ -30,7 +30,7 @@ export function AddDepartment() {
     }
   });
 
-  const onSubmit = async (data: DepartmentFormValues) => {
+  const onSubmit = async (_data: DepartmentFormValues) => {
     setIsSubmitting(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));

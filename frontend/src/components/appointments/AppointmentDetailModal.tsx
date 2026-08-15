@@ -1,4 +1,4 @@
-import { X, Calendar, Clock, User, Phone, CheckCircle, CalendarDays, XCircle } from "lucide-react"
+import { X, Calendar, User, Phone, CheckCircle, CalendarDays, XCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 type Appointment = {

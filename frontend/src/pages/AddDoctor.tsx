@@ -51,7 +51,7 @@ export function AddDoctor() {
     setStep(s => s - 1);
   }
 
-  const onSubmit = async (data: DoctorFormValues) => {
+  const onSubmit = async (_data: DoctorFormValues) => {
     setIsSubmitting(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));

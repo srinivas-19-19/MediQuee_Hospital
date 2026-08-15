@@ -21,7 +21,7 @@ export function Login() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = (_data: LoginFormValues) => {
     // We simulate authentication here; in a real app, send data.email / data.password to API
     login('hospital'); 
     navigate("/dashboard");

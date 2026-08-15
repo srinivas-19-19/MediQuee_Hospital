@@ -18,7 +18,7 @@ const nurseSchema = z.object({
   licenseNumber: z.string().min(4, "License number is required"),
   department: z.string().min(2, "Department is required"),
   shiftType: z.string().min(2, "Shift type is required"),
-  homeNursing: z.boolean().default(false),
+  homeNursing: z.boolean().optional(),
 });
 
 type NurseFormValues = z.infer<typeof nurseSchema>;
@@ -54,7 +54,7 @@ export function AddNurse() {
     setStep(s => s - 1);
   }
 
-  const onSubmit = async (data: NurseFormValues) => {
+  const onSubmit = async (_data: NurseFormValues) => {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSubmitting(false);

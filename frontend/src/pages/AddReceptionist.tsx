@@ -48,7 +48,7 @@ export function AddReceptionist() {
     setStep(s => s - 1);
   }
 
-  const onSubmit = async (data: ReceptionistFormValues) => {
+  const onSubmit = async (_data: ReceptionistFormValues) => {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSubmitting(false);

@@ -1,4 +1,4 @@
-import { Moon, Sun, Globe, ChevronRight } from "lucide-react"
+import { Moon, Sun, Globe } from "lucide-react"
 import { motion } from "framer-motion"
 import { useTheme } from "@/context/ThemeContext"
 import { useTranslation } from "react-i18next"

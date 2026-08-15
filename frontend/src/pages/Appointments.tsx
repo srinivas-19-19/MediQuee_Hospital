@@ -1,4 +1,4 @@
-import { Search, Filter, Stethoscope, Video, Home, FlaskConical, TestTube, Calendar, ChevronDown, MoreVertical, Trash2 } from "lucide-react"
+import { Search, Filter, Stethoscope, Video, Home, FlaskConical, TestTube, Calendar, ChevronDown, Trash2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppointmentDetailModal } from "../components/appointments/AppointmentDetailModal"

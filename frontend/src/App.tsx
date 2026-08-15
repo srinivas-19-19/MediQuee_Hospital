@@ -23,7 +23,9 @@ import { Login } from "./pages/Login"
 import { Register } from "./pages/Register"
 import './index.css'
 
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+import { type ReactNode } from "react"
+
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;
@@ -76,7 +78,7 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <AnimatedRoutes />
           </BrowserRouter>
         </AuthProvider>

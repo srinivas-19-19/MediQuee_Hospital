@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon, ChevronDown, Stethoscope, Video, Home, FlaskConical, TestTube, ArrowUp, ArrowRight, IndianRupee, TrendingUp } from "lucide-react"
+import { Calendar as CalendarIcon, Stethoscope, Video, Home, FlaskConical, TestTube, ArrowUp, IndianRupee, TrendingUp } from "lucide-react"
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts'
 import { cn } from "@/lib/utils"
 

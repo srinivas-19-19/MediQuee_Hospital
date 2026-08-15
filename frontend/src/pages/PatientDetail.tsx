@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Phone, Calendar, FileText, Activity, Clock, FileCheck, Download } from "lucide-react"
+import { ArrowLeft, User, Phone, Calendar, Activity, Clock, FileCheck, Download } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import { motion } from "framer-motion"
 import { useState } from "react"

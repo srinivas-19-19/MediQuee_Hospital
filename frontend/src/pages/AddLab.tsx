@@ -26,7 +26,7 @@ export function AddLab() {
     resolver: zodResolver(labSchema),
   });
 
-  const onSubmit = async (data: LabFormValues) => {
+  const onSubmit = async (_data: LabFormValues) => {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSubmitting(false);

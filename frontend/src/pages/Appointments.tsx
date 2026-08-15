@@ -224,6 +224,7 @@ export function Appointments() {
                   ))}
                 </AnimatePresence>
               </motion.div>
+            ) : (
               <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-8">
                 <EmptyState 
                   icon={Search}

@@ -1,0 +1,152 @@
+import { User, Bell, Shield, Settings, LogOut, ChevronRight, Building2, Users, LayoutGrid, Key, HelpCircle, MessageSquare } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { motion } from "framer-motion"
+import { useAuth } from "@/context/AuthContext"
+import { useState } from "react"
+import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
+
+export function Profile() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  }
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  const accountLinks = [
+    { icon: User, label: "Personal Information", path: "/profile/edit" },
+    { icon: Building2, label: "Hospital Information", path: "/profile/hospital" },
+  ];
+
+  const operationLinks = [
+    { icon: Users, label: "Staff Management", path: "/profile/staff" },
+    { icon: LayoutGrid, label: "Departments", path: "/profile/departments" },
+    { icon: Key, label: "Permissions", path: "/profile/permissions" },
+  ];
+
+  const appLinks = [
+    { icon: Bell, label: "Notifications", path: "/notifications" },
+    { icon: Shield, label: "Security & Privacy", path: "/security" },
+    { icon: Settings, label: "App Settings", path: "/settings" },
+  ];
+
+  const supportLinks = [
+    { icon: HelpCircle, label: "Help & Support", path: "/support" },
+    { icon: MessageSquare, label: "Contact Support", path: "/contact" },
+  ];
+
+  const renderSection = (title: string, links: any[]) => (
+    <div className="flex flex-col gap-2 mb-6">
+      <h3 className="text-[14px] font-semibold text-[#667085] px-1 uppercase tracking-wider">{title}</h3>
+      <div className="bg-white rounded-2xl border border-gray-200/60 shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden">
+        {links.map((link, index) => (
+          <motion.button 
+            key={index}
+            variants={item}
+            onClick={() => navigate(link.path)} 
+            className="w-full flex items-center justify-between p-4 border-b border-gray-100 last:border-0 interactive-element active:bg-gray-50/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gray-50 text-[#667085] flex items-center justify-center shrink-0 border border-gray-100">
+                <link.icon className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-[15px] text-[#172033]">{link.label}</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#98A2B3]" />
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col bg-background min-h-full pb-8">
+      
+      {/* Sticky Top Controls */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md pt-4 pb-3 px-4 flex justify-between items-center border-b border-gray-100/50 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <h1 className="text-[22px] font-semibold text-[#172033]">Profile</h1>
+        <button onClick={() => navigate('/notifications')} className="p-2 -mr-2 text-[#172033] interactive-element relative">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
+        </button>
+      </div>
+
+      <div className="flex flex-col px-4 pt-5">
+        
+        {/* Profile Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.02)] border border-gray-200/60 mb-6 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-blue-50 text-primary flex items-center justify-center border border-blue-100 shrink-0 overflow-hidden">
+              <User className="w-7 h-7" />
+            </div>
+            <div className="flex flex-col">
+              <h2 className="text-[18px] font-bold text-[#172033]">Admin User</h2>
+              <p className="text-[13px] font-medium text-[#667085]">admin@mediquee.com</p>
+              <div className="mt-1 flex items-center">
+                <span className="bg-blue-50 text-primary text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-blue-100">
+                  Hospital Administrator
+                </span>
+              </div>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-[#98A2B3]" />
+        </motion.div>
+
+        {/* Menu Sections */}
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col"
+        >
+          {renderSection("Account", accountLinks)}
+          {renderSection("Operations", operationLinks)}
+          {renderSection("App", appLinks)}
+          {renderSection("Support", supportLinks)}
+        </motion.div>
+
+        {/* Logout */}
+        <motion.button 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full flex items-center justify-center gap-2 p-4 bg-white border border-red-100 text-destructive rounded-2xl shadow-sm interactive-element active:bg-red-50 transition-colors mt-2"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="font-semibold text-[15px]">Logout</span>
+        </motion.button>
+      </div>
+
+      <ConfirmationSheet 
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Logout?"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Logout"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        onConfirm={handleLogout}
+      />
+    </div>
+  )
+}

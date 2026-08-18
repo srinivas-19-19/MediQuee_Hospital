@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-type Role = 'hospital' | 'lab';
+type Role = 'admin' | 'doctor' | 'nurse' | 'receptionist' | 'lab';
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -17,10 +17,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   
   const [role, setRole] = useState<Role>(() => {
-    return (localStorage.getItem('role') as Role) || 'hospital';
+    return (localStorage.getItem('role') as Role) || 'admin';
   });
 
-  const login = (selectedRole: Role = 'hospital') => {
+  const login = (selectedRole: Role = 'admin') => {
     setIsAuthenticated(true);
     setRole(selectedRole);
     localStorage.setItem('auth', 'true');

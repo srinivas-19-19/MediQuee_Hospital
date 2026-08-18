@@ -117,14 +117,23 @@ export function AddDepartment() {
           </div>
           
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t border-gray-100/50 pb-safe z-20">
-            <button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="w-full bg-primary hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3.5 rounded-xl transition-colors interactive-element flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
-            >
-              {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-              {isSubmitting ? 'Creating...' : 'Create Department'}
-            </button>
+            <div className="flex gap-3 max-w-md mx-auto">
+              <button 
+                type="button" 
+                onClick={handleBack}
+                className="flex-1 bg-white hover:bg-gray-50 border border-gray-200/60 text-[#172033] font-semibold py-3.5 rounded-xl transition-colors interactive-element shadow-sm"
+              >
+                Back
+              </button>
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="flex-[2] bg-primary hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3.5 rounded-xl transition-colors interactive-element flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
+              >
+                {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                {isSubmitting ? 'Creating...' : 'Create Department'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

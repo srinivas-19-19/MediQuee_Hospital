@@ -1,43 +1,87 @@
 import { NavLink, useLocation } from "react-router-dom"
-import { LayoutGrid, Calendar, IndianRupee, User, Plus } from "lucide-react"
+import { LayoutGrid, Calendar, IndianRupee, User, Plus, Video, Home, Users } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
 import { cn } from "@/lib/utils"
 
 export function BottomNav({ onQuickAdd }: { onQuickAdd: () => void }) {
   const location = useLocation()
+  const { role } = useAuth()
+
+  // Hide bottom nav on form pages that have their own fixed bottom buttons
+  const hideOnRoutes = ['/add-department', '/add-doctor', '/add-lab', '/add-nurse', '/add-receptionist'];
+  if (hideOnRoutes.some(route => location.pathname.startsWith(route))) {
+    return null;
+  }
+
+  const getLinks = () => {
+    switch (role) {
+      case 'doctor':
+        return [
+          { to: '/doctor', icon: LayoutGrid, label: 'Home' },
+          { to: '/appointments', icon: Calendar, label: 'OPs' },
+          { to: '/video-consultations', icon: Video, label: 'Video' },
+          { to: '/profile', icon: User, label: 'Profile' },
+        ];
+      case 'nurse':
+        return [
+          { to: '/nurse', icon: LayoutGrid, label: 'Home' },
+          { to: '/home-nursing', icon: Home, label: 'Nursing' },
+          { to: '/patients', icon: Users, label: 'Patients' },
+          { to: '/profile', icon: User, label: 'Profile' },
+        ];
+      case 'receptionist':
+        return [
+          { to: '/receptionist', icon: LayoutGrid, label: 'Home' },
+          { to: '/appointments', icon: Calendar, label: 'Agenda' },
+          { to: '/patients', icon: Users, label: 'Queue' },
+          { to: '/profile', icon: User, label: 'Profile' },
+        ];
+      case 'admin':
+      default:
+        return [
+          { to: '/dashboard', icon: LayoutGrid, label: 'Home' },
+          { to: '/appointments', icon: Calendar, label: 'Agenda' },
+          { to: '/payouts', icon: IndianRupee, label: 'Payout' },
+          { to: '/profile', icon: User, label: 'Profile' },
+        ];
+    }
+  }
+
+  const links = getLinks();
+  const leftLinks = links.slice(0, 2);
+  const rightLinks = links.slice(2, 4);
+
+  const renderLink = (link: any) => {
+    const Icon = link.icon;
+    const isSpecialPath = link.to !== '/dashboard' && link.to !== '/doctor' && link.to !== '/nurse' && link.to !== '/receptionist';
+    return (
+      <NavLink 
+        key={link.to}
+        to={link.to} 
+        className={({ isActive }) => {
+          const active = isActive || (isSpecialPath && location.pathname.includes(link.to));
+          return cn("flex flex-col items-center justify-center gap-1 w-12 h-12 transition-colors interactive-element", 
+          active ? "text-primary" : "text-[#98A2B3] hover:text-[#667085]")
+        }}
+      >
+        {({ isActive }) => {
+          const active = isActive || (isSpecialPath && location.pathname.includes(link.to));
+          return (
+            <>
+              <Icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
+              <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>{link.label}</span>
+            </>
+          );
+        }}
+      </NavLink>
+    );
+  };
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/85 backdrop-blur-xl border-t border-gray-200/50 pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.02)]">
       <div className="flex items-center justify-between px-6 pt-2 pb-2 h-[72px]">
         
-        <NavLink 
-          to="/dashboard" 
-          className={({ isActive }) => 
-            cn("flex flex-col items-center justify-center gap-1 w-12 h-12 transition-colors interactive-element", 
-            isActive ? "text-primary" : "text-[#98A2B3] hover:text-[#667085]")
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <LayoutGrid className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-              <span className={cn("text-[10px]", isActive ? "font-semibold" : "font-medium")}>Home</span>
-            </>
-          )}
-        </NavLink>
-
-        <NavLink 
-          to="/appointments" 
-          className={({ isActive }) => 
-            cn("flex flex-col items-center justify-center gap-1 w-12 h-12 transition-colors interactive-element", 
-            isActive ? "text-primary" : "text-[#98A2B3] hover:text-[#667085]")
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <Calendar className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-              <span className={cn("text-[10px]", isActive ? "font-semibold" : "font-medium")}>Agenda</span>
-            </>
-          )}
-        </NavLink>
+        {leftLinks.map(renderLink)}
 
         {/* FAB - Quick Add */}
         <div className="relative -top-7 px-2">
@@ -48,36 +92,7 @@ export function BottomNav({ onQuickAdd }: { onQuickAdd: () => void }) {
           </button>
         </div>
 
-        <NavLink 
-          to="/payouts" 
-          className={({ isActive }) => 
-            cn("flex flex-col items-center justify-center gap-1 w-12 h-12 transition-colors interactive-element", 
-            isActive || location.pathname.includes('/payout') ? "text-primary" : "text-[#98A2B3] hover:text-[#667085]")
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <IndianRupee className="w-6 h-6" strokeWidth={isActive || location.pathname.includes('/payout') ? 2.5 : 2} />
-              <span className={cn("text-[10px]", isActive || location.pathname.includes('/payout') ? "font-semibold" : "font-medium")}>Payout</span>
-            </>
-          )}
-        </NavLink>
-
-        <NavLink 
-          to="/profile" 
-          className={({ isActive }) => 
-            cn("flex flex-col items-center justify-center gap-1 w-12 h-12 transition-colors interactive-element", 
-            isActive ? "text-primary" : "text-[#98A2B3] hover:text-[#667085]")
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <User className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-              <span className={cn("text-[10px]", isActive ? "font-semibold" : "font-medium")}>Profile</span>
-            </>
-          )}
-        </NavLink>
-
+        {rightLinks.map(renderLink)}
       </div>
     </div>
   )

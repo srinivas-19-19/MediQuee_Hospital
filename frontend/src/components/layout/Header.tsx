@@ -17,6 +17,12 @@ export function Header() {
     return path.charAt(0).toUpperCase() + path.slice(1);
   };
 
+  // Hide header on form pages that have their own header
+  const hideOnRoutes = ['/add-department', '/add-doctor', '/add-lab', '/add-nurse', '/add-receptionist'];
+  if (hideOnRoutes.some(route => location.pathname.startsWith(route))) {
+    return null;
+  }
+
   return (
     <header className="bg-white px-4 pt-10 pb-3 z-40 flex flex-col gap-3 shrink-0 border-b border-gray-100 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
       <div className="flex items-center justify-between">

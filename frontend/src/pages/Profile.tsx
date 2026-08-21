@@ -35,52 +35,15 @@ export function Profile() {
     { icon: MessageSquare, label: "Contact Support", path: "/contact" },
   ];
 
-  let roleTitle = "Hospital Administrator";
-  let roleName = "Admin User";
-  let accountLinks: any[] = [];
-  let operationLinks: any[] = [];
+  const accountLinks = [
+    { icon: Building2, label: "Hospital Information", path: "/profile/hospital" },
+  ];
 
-  if (role === 'admin') {
-    accountLinks = [
-      { icon: Building2, label: "Hospital Information", path: "/profile/hospital" },
-    ];
-    operationLinks = [
-      { icon: Users, label: "Staff Management", path: "/profile/staff" },
-      { icon: LayoutGrid, label: "Departments", path: "/profile/departments" },
-      { icon: Key, label: "Permissions", path: "/profile/permissions" },
-    ];
-  } else if (role === 'doctor') {
-    roleTitle = "Doctor";
-    roleName = "Dr. User";
-    accountLinks = [
-      { icon: User, label: "Doctor Information", path: "/profile/edit" },
-      { icon: LayoutGrid, label: "Specialization & Department", path: "/profile/specialization" },
-      { icon: Calendar, label: "Consultation Availability", path: "/profile/availability" },
-    ];
-  } else if (role === 'nurse') {
-    roleTitle = "Nurse";
-    roleName = "Nurse User";
-    accountLinks = [
-      { icon: User, label: "Nurse Information", path: "/profile/edit" },
-      { icon: LayoutGrid, label: "Service Area", path: "/profile/service-area" },
-      { icon: Calendar, label: "Availability", path: "/profile/availability" },
-    ];
-  } else if (role === 'receptionist') {
-    roleTitle = "Receptionist";
-    roleName = "Receptionist User";
-    accountLinks = [
-      { icon: User, label: "Receptionist Information", path: "/profile/edit" },
-      { icon: Building2, label: "Hospital & Department", path: "/profile/hospital" },
-    ];
-  } else if (role === 'lab') {
-    roleTitle = "Laboratory";
-    roleName = "Lab User";
-    accountLinks = [
-      { icon: Building2, label: "Laboratory Information", path: "/profile/edit" },
-      { icon: LayoutGrid, label: "Test Catalog", path: "/profile/test-catalog" },
-      { icon: Home, label: "Home Collection Settings", path: "/profile/home-collection" },
-    ];
-  }
+  const operationLinks = [
+    { icon: Users, label: "Staff Management", path: "/profile/staff" },
+    { icon: LayoutGrid, label: "Departments", path: "/profile/departments" },
+    { icon: Key, label: "Permissions", path: "/profile/permissions" },
+  ];
 
   const renderSection = (title: string, links: any[]) => (
     <div className="flex flex-col gap-2 mb-6">
@@ -128,11 +91,11 @@ export function Profile() {
               <User className="w-7 h-7" />
             </div>
             <div className="flex flex-col">
-              <h2 className="text-[18px] font-bold text-[#172033]">{roleName}</h2>
+              <h2 className="text-[18px] font-bold text-[#172033]">Admin User</h2>
               <p className="text-[13px] font-medium text-[#667085]">user@mediquee.com</p>
               <div className="mt-1 flex items-center">
                 <span className="bg-blue-50 text-primary text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-blue-100">
-                  {roleTitle}
+                  Hospital Administrator
                 </span>
               </div>
             </div>

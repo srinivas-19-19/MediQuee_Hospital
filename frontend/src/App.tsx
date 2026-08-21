@@ -7,11 +7,16 @@ import "./i18n"
 
 // Role Dashboards
 import { DoctorDashboard } from "./pages/doctor/DoctorDashboard"
+import { VideoConsultations } from "./pages/doctor/VideoConsultations"
 import { NurseDashboard } from "./pages/nurse/NurseDashboard"
 import { ReceptionistDashboard } from "./pages/receptionist/ReceptionistDashboard"
+import { CheckIn } from "./pages/receptionist/CheckIn"
+import { BookAppointment } from "./pages/receptionist/BookAppointment"
+import { QueueScreen } from "./pages/receptionist/QueueScreen"
 
 // Hospital layout & pages
 import { AppLayout } from "./components/layout/AppLayout"
+import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute"
 import { Dashboard } from "./pages/Dashboard"
 import { Appointments } from "./pages/Appointments"
 import { Payouts } from "./pages/Payouts"
@@ -26,6 +31,17 @@ import { PatientDetail } from "./pages/PatientDetail"
 import { Settings } from "./pages/Settings"
 import { Notifications } from "./pages/Notifications"
 import { Security } from "./pages/Security"
+import { HospitalInfo } from "./pages/profile/HospitalInfo"
+import { StaffManagement } from "./pages/profile/StaffManagement"
+import { StaffList } from "./pages/profile/StaffList"
+import { DepartmentsList } from "./pages/profile/DepartmentsList"
+import { PermissionsList } from "./pages/profile/PermissionsList"
+import { HelpSupport } from "./pages/profile/HelpSupport"
+import { ContactSupport } from "./pages/profile/ContactSupport"
+import { ProfileEdit } from "./pages/profile/ProfileEdit"
+import { AboutMediQuee } from "./pages/marketing/AboutMediQuee"
+import { BookMedicalCamp } from "./pages/marketing/BookMedicalCamp"
+import { BookMarketing } from "./pages/marketing/BookMarketing"
 
 // Lab layout & pages
 import { LabLayout } from "./components/lab/LabLayout"
@@ -91,27 +107,61 @@ function AnimatedRoutes() {
 
         {/* ── HOSPITAL ROUTES ─────────────────────────────── */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/doctor" element={<DoctorDashboard />} />
-          <Route path="/nurse" element={<NurseDashboard />} />
-          <Route path="/receptionist" element={<ReceptionistDashboard />} />
+          
+          {/* Admin Routes */}
+          <Route element={<RoleProtectedRoute allowedRoles={['admin']} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/payouts" element={<Payouts />} />
+            <Route path="/add-department" element={<AddDepartment />} />
+            <Route path="/add-doctor" element={<AddDoctor />} />
+            <Route path="/add-lab" element={<AddLab />} />
+            <Route path="/add-nurse" element={<AddNurse />} />
+            <Route path="/add-receptionist" element={<AddReceptionist />} />
+            <Route path="/about" element={<AboutMediQuee />} />
+            <Route path="/book-camp" element={<BookMedicalCamp />} />
+            <Route path="/book-marketing" element={<BookMarketing />} />
+          </Route>
+
+          {/* Doctor Routes */}
+          <Route element={<RoleProtectedRoute allowedRoles={['doctor']} />}>
+            <Route path="/doctor" element={<DoctorDashboard />} />
+            <Route path="/video-consultations" element={<VideoConsultations />} />
+            {/* placeholders for future doctor-specific pages */}
+          </Route>
+
+          {/* Nurse Routes */}
+          <Route element={<RoleProtectedRoute allowedRoles={['nurse']} />}>
+            <Route path="/nurse" element={<NurseDashboard />} />
+          </Route>
+
+          {/* Receptionist Routes */}
+          <Route element={<RoleProtectedRoute allowedRoles={['receptionist']} />}>
+            <Route path="/receptionist" element={<ReceptionistDashboard />} />
+            <Route path="/receptionist/queue" element={<QueueScreen />} />
+            <Route path="/receptionist/check-in" element={<CheckIn />} />
+            <Route path="/receptionist/book-appointment" element={<BookAppointment />} />
+          </Route>
+
+          {/* Shared routes (require authentication, content is role-aware) */}
           <Route path="/appointments" element={<Appointments />} />
-          <Route path="/payouts" element={<Payouts />} />
           <Route path="/patients" element={<Patients />} />
           <Route path="/patients/:id" element={<PatientDetail />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<ProfileEdit />} />
+          <Route path="/profile/hospital" element={<HospitalInfo />} />
+          <Route path="/profile/staff" element={<StaffManagement />} />
+          <Route path="/profile/staff/:type" element={<StaffList />} />
+          <Route path="/profile/departments" element={<DepartmentsList />} />
+          <Route path="/profile/permissions" element={<PermissionsList />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/security" element={<Security />} />
-          <Route path="/add-department" element={<AddDepartment />} />
-          <Route path="/add-doctor" element={<AddDoctor />} />
-          <Route path="/add-lab" element={<AddLab />} />
-          <Route path="/add-nurse" element={<AddNurse />} />
-          <Route path="/add-receptionist" element={<AddReceptionist />} />
+          <Route path="/support" element={<HelpSupport />} />
+          <Route path="/contact" element={<ContactSupport />} />
         </Route>
 
         {/* ── LAB ROUTES ──────────────────────────────────── */}
-        <Route element={<ProtectedRoute><LabLayout /></ProtectedRoute>}>
+        <Route element={<RoleProtectedRoute allowedRoles={['lab']}><LabLayout /></RoleProtectedRoute>}>
           <Route path="/lab" element={<LabDashboard />} />
           <Route path="/lab/orders" element={<LabOrders />} />
           <Route path="/lab/order/:id" element={<LabOrderDetail />} />

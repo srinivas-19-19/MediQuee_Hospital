@@ -1,5 +1,6 @@
 import { Search, Filter, Stethoscope, Video, Home, FlaskConical, TestTube, Calendar, ChevronDown, Trash2 } from "lucide-react"
 import { useState, useEffect } from "react"
+import { useAuth } from "@/context/AuthContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppointmentDetailModal } from "../components/appointments/AppointmentDetailModal"
 import { Skeleton } from "../components/ui/Skeleton"
@@ -13,13 +14,22 @@ export function Appointments() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  const appointmentTypes = [
+  const { role } = useAuth();
+  
+  const allAppointmentTypes = [
     { id: 'op', label: 'OP', icon: Stethoscope },
-    { id: 'video', label: 'Video Consultation', icon: Video },
+    { id: 'video', label: 'Video Consult', icon: Video },
     { id: 'home', label: 'Home Nursing', icon: Home },
     { id: 'lab', label: 'Lab Tests', icon: FlaskConical },
-    { id: 'sample', label: 'Home Sample Collection', icon: TestTube },
+    { id: 'sample', label: 'Sample Collection', icon: TestTube },
   ];
+
+  const appointmentTypes = allAppointmentTypes.filter(type => {
+    if (role === 'doctor') return ['op', 'video'].includes(type.id);
+    if (role === 'nurse') return ['home'].includes(type.id);
+    if (role === 'lab') return ['lab', 'sample'].includes(type.id);
+    return true; // admin and receptionist see all
+  });
 
   const dates = [
     { date: '14 May', day: 'Wed' },
@@ -37,10 +47,9 @@ export function Appointments() {
 
   const [appointmentsList, setAppointmentsList] = useState(initialAppointments);
 
-  // Simulate data fetching
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 1000);
+    const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
   }, [selectedType, selectedDate]);
 
@@ -56,32 +65,31 @@ export function Appointments() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Confirmed': return 'bg-green-50 text-success border-green-100';
-      case 'Pending': return 'bg-orange-50 text-warning border-orange-100';
-      case 'Completed': return 'bg-teal-50 text-teal-600 border-teal-100';
-      case 'Cancelled': return 'bg-red-50 text-destructive border-red-100';
-      default: return 'bg-gray-50 text-gray-600 border-gray-100';
+      case 'Confirmed': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+      case 'Pending': return 'bg-amber-50 text-amber-700 border-amber-100';
+      case 'Completed': return 'bg-blue-50 text-blue-700 border-blue-100';
+      case 'Cancelled': return 'bg-rose-50 text-rose-700 border-rose-100';
+      default: return 'bg-slate-50 text-slate-600 border-slate-100';
     }
   };
 
   return (
-    <div className="flex flex-col bg-background min-h-full pb-6">
+    <div className="flex flex-col bg-slate-50/50 min-h-full pb-8">
       
-      {/* Sticky Top Controls */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md pt-4 pb-2 px-4 flex flex-col gap-4 border-b border-gray-100/50 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+      {/* Sticky Header Section */}
+      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl pt-6 pb-4 px-4 flex flex-col gap-5 border-b border-slate-200/60 shadow-sm">
         
-        {/* Header Title & Actions */}
-        <div className="flex justify-between items-center px-1">
-          <h1 className="text-[22px] font-semibold text-[#172033]">Appointments</h1>
-          <div className="flex gap-3 text-[#172033]">
-            <Search className="w-5 h-5 cursor-pointer interactive-element" />
-            <Filter className="w-5 h-5 cursor-pointer interactive-element" />
-          </div>
+        {/* Title & Actions */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Appointments</h1>
+          <button className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
+            <Filter className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Compact Search */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-[#98A2B3]">
+        {/* Search Bar */}
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
             <Search className="w-4 h-4" />
           </div>
           <input 
@@ -89,12 +97,12 @@ export function Appointments() {
             placeholder="Search patient, doctor, or department..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200/60 rounded-xl outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-[14px] text-[#172033] placeholder:text-[#98A2B3] shadow-sm"
+            className="w-full pl-10 pr-4 py-3 bg-slate-100 border-transparent rounded-2xl outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-[15px] font-medium text-slate-900 placeholder:text-slate-500"
           />
         </div>
 
-        {/* Service Selector (Above Date) */}
-        <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+        {/* Service Selector Chips */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
           {appointmentTypes.map((type) => {
             const isActive = selectedType === type.id;
             const Icon = type.icon;
@@ -103,28 +111,27 @@ export function Appointments() {
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
                 className={cn(
-                  "flex items-center gap-2 px-3.5 py-2 rounded-xl flex-shrink-0 transition-all interactive-element border",
-                  isActive ? "bg-blue-50/80 border-primary/30 text-primary" : "bg-white border-gray-200/60 text-[#667085] hover:border-gray-300"
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl flex-shrink-0 transition-all active:scale-95 font-semibold",
+                  isActive ? "bg-slate-900 text-white shadow-md shadow-slate-900/20" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                 )}
               >
                 <Icon className="w-4 h-4" strokeWidth={isActive ? 2.5 : 2} />
-                <span className={cn("text-[13px] font-semibold whitespace-nowrap", isActive ? "text-primary" : "text-[#172033]")}>
-                  {type.label}
-                </span>
+                <span className="text-sm whitespace-nowrap">{type.label}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      <div className="flex flex-col gap-5 px-4 pt-4">
+      <div className="flex flex-col gap-6 px-4 pt-6">
         
-        {/* Date Selector */}
+        {/* Calendar Strip */}
         <div className="flex items-center gap-3">
-          <button className="flex items-center justify-center w-12 h-12 bg-white border border-gray-200/60 text-[#172033] rounded-xl flex-shrink-0 interactive-element active:scale-95 transition-transform shadow-sm">
-            <Calendar className="w-[18px] h-[18px]" strokeWidth={2.5} />
+          <button className="flex items-center justify-center w-14 h-14 bg-white border border-slate-200/80 text-slate-700 rounded-2xl flex-shrink-0 active:scale-95 transition-transform shadow-sm">
+            <Calendar className="w-6 h-6" strokeWidth={2} />
           </button>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1">
+          <div className="w-px h-10 bg-slate-200 mx-1"></div>
+          <div className="flex gap-2.5 overflow-x-auto scrollbar-hide py-1">
             {dates.map((d) => {
               const isActive = selectedDate === d.date;
               return (
@@ -132,108 +139,119 @@ export function Appointments() {
                   key={d.date}
                   onClick={() => setSelectedDate(d.date)}
                   className={cn(
-                    "flex flex-col items-center justify-center min-w-[64px] py-1.5 rounded-xl flex-shrink-0 transition-all interactive-element border",
-                    isActive ? "bg-primary text-white border-primary shadow-[0_4px_12px_rgba(23,105,224,0.25)]" : "bg-white border-gray-200/60 text-[#667085]"
+                    "flex flex-col items-center justify-center min-w-[68px] py-2 rounded-2xl flex-shrink-0 transition-all active:scale-95",
+                    isActive ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "bg-white border border-slate-200/80 text-slate-500"
                   )}
                 >
-                  <span className={cn("text-[14px]", isActive ? "font-bold" : "font-semibold text-[#172033]")}>{d.date}</span>
-                  <span className={cn("text-[11px]", isActive ? "font-medium opacity-90" : "font-medium text-[#98A2B3]")}>{d.day}</span>
+                  <span className={cn("text-sm", isActive ? "font-bold" : "font-semibold text-slate-800")}>{d.date}</span>
+                  <span className={cn("text-[11px]", isActive ? "font-medium text-blue-100" : "font-medium text-slate-400")}>{d.day}</span>
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* Department Filter */}
-        <button className="flex items-center justify-between w-full bg-white rounded-xl px-3.5 py-3 border border-gray-200/60 shadow-sm active:scale-[0.98] transition-transform interactive-element">
-          <span className="font-semibold text-[14px] text-[#172033]">All Departments</span>
-          <ChevronDown className="w-4 h-4 text-[#98A2B3]" />
-        </button>
+        {/* List Section */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="font-bold text-slate-900 text-lg">Schedule</h2>
+            <button className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors">
+              All Departments <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
 
-        {/* Appointment List (Grouped Rows) */}
-        <div className="flex flex-col relative">
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div key="skeletons" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 py-2 px-1">
-                    <Skeleton className="w-[60px] h-4 mt-2" />
-                    <div className="flex items-start flex-1 gap-3">
-                      <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-                      <div className="flex flex-col gap-2 w-full">
-                        <Skeleton className="h-4 w-[120px]" />
-                        <Skeleton className="h-3 w-[150px]" />
+          <div className="flex flex-col relative gap-3">
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div key="skeletons" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100 flex gap-4">
+                      <div className="flex flex-col items-center justify-center">
+                        <Skeleton className="w-12 h-4 mb-1" />
+                        <Skeleton className="w-8 h-3" />
+                      </div>
+                      <div className="w-px h-10 bg-slate-100 my-auto" />
+                      <div className="flex items-center gap-3 flex-1">
+                        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                        <div className="flex flex-col gap-2 flex-1">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </motion.div>
-            ) : filteredAppointments.length > 0 ? (
-              <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col bg-white rounded-2xl border border-gray-200/60 shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden">
-                <AnimatePresence>
-                  {filteredAppointments.map((apt) => (
-                    <motion.div 
-                      layout
-                      key={apt.id} 
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, x: -100 }}
-                      transition={{ duration: 0.2 }}
-                      drag="x"
-                      dragConstraints={{ left: 0, right: 0 }}
-                      dragElastic={0.2}
-                      onDragEnd={(_, info) => {
-                        if (info.offset.x < -60) handleDelete(apt.id);
-                      }}
-                      className="relative border-b border-gray-100 last:border-0 group"
-                    >
-                      {/* Delete Background Layer */}
-                      <div className="absolute inset-0 bg-destructive/10 flex items-center justify-end px-6 z-0">
-                        <Trash2 className="text-destructive w-5 h-5" />
-                      </div>
-
-                      {/* Foreground Row */}
+                  ))}
+                </motion.div>
+              ) : filteredAppointments.length > 0 ? (
+                <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
+                  <AnimatePresence>
+                    {filteredAppointments.map((apt) => (
                       <motion.div 
-                        onClick={() => setSelectedAppointment(apt)}
-                        className="flex items-start gap-3 p-4 cursor-pointer hover:bg-gray-50/50 active:bg-gray-50 transition-colors relative z-10 bg-white interactive-element"
+                        layout
+                        key={apt.id} 
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, x: -100 }}
+                        transition={{ duration: 0.2 }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.2}
+                        onDragEnd={(_, info) => {
+                          if (info.offset.x < -80) handleDelete(apt.id);
+                        }}
+                        className="relative rounded-2xl group overflow-hidden bg-rose-500"
                       >
-                        <div className="flex flex-col items-center pt-1 min-w-[65px]">
-                          <span className="text-[13px] font-bold text-[#172033]">{apt.time.split(' ')[0]}</span>
-                          <span className="text-[10px] font-semibold text-[#98A2B3]">{apt.time.split(' ')[1]}</span>
+                        {/* Delete Background Layer */}
+                        <div className="absolute inset-0 flex items-center justify-end px-6 z-0">
+                          <Trash2 className="text-white w-6 h-6" />
                         </div>
-                        
-                        <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden shrink-0 mt-0.5">
-                          <img src={apt.avatar} alt={apt.patientName} className="w-full h-full object-cover" />
-                        </div>
-                        
-                        <div className="flex flex-col flex-1">
-                          <div className="flex justify-between items-start">
-                            <span className="text-[15px] font-semibold text-[#172033]">{apt.patientName}</span>
-                            <div className={cn(
-                              "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md border shrink-0",
-                              getStatusColor(apt.status)
-                            )}>
-                              {apt.status}
+
+                        {/* Foreground Card */}
+                        <motion.div 
+                          onClick={() => setSelectedAppointment(apt)}
+                          className="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors relative z-10 bg-white border border-slate-200/60 rounded-2xl shadow-sm"
+                        >
+                          <div className="flex flex-col items-center justify-center min-w-[70px]">
+                            <span className="text-[15px] font-extrabold text-slate-900 tracking-tight">{apt.time.split(' ')[0]}</span>
+                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{apt.time.split(' ')[1]}</span>
+                          </div>
+                          
+                          <div className="w-px h-12 bg-slate-100 shrink-0" />
+
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-11 h-11 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                              <img src={apt.avatar} alt={apt.patientName} className="w-full h-full object-cover" />
+                            </div>
+                            
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <div className="flex justify-between items-start gap-2">
+                                <span className="text-[16px] font-bold text-slate-900 truncate">{apt.patientName}</span>
+                                <div className={cn(
+                                  "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border shrink-0",
+                                  getStatusColor(apt.status)
+                                )}>
+                                  {apt.status}
+                                </div>
+                              </div>
+                              <span className="text-[13px] font-medium text-slate-600 mt-0.5 truncate">{apt.type}</span>
+                              <span className="text-[12px] font-semibold text-slate-400 mt-0.5 truncate">{apt.doctor}</span>
                             </div>
                           </div>
-                          <span className="text-[13px] font-medium text-[#667085] mt-1">{apt.type}</span>
-                          <span className="text-[12px] font-medium text-[#98A2B3] mt-0.5">{apt.doctor}</span>
-                        </div>
+                        </motion.div>
                       </motion.div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            ) : (
-              <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-8">
-                <EmptyState 
-                  icon={Search}
-                  title="No appointments found"
-                  description="Adjust your search or filters to find what you're looking for."
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              ) : (
+                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-12">
+                  <EmptyState 
+                    icon={Search}
+                    title="No appointments found"
+                    description="Adjust your search or filters to find what you're looking for."
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

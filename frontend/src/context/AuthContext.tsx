@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-type Role = 'admin' | 'doctor' | 'nurse' | 'receptionist' | 'lab';
+export type Role = 'admin' | 'doctor' | 'nurse' | 'receptionist' | 'lab';
 
 type AuthContextType = {
   isAuthenticated: boolean;

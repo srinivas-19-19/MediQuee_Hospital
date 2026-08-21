@@ -11,7 +11,7 @@ const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
   phone: z.string().min(10, "Phone number must be at least 10 digits."),
-  role: z.enum(["hospital", "lab"]),
+  role: z.enum(["admin", "lab"]),
   password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
@@ -24,7 +24,7 @@ export function Register() {
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: 'hospital'
+      role: 'admin'
     }
   });
 
@@ -119,7 +119,7 @@ export function Register() {
                 {...register("role")}
                 className={`w-full pl-12 pr-4 py-3.5 bg-white border ${errors.role ? 'border-red-500 focus:ring-red-500/10' : 'border-gray-200 focus:border-primary focus:ring-primary/10'} rounded-2xl outline-none focus:ring-4 transition-all text-sm font-medium appearance-none`}
               >
-                <option value="hospital">Hospital</option>
+                <option value="admin">Hospital</option>
                 <option value="lab">Lab</option>
               </select>
             </div>

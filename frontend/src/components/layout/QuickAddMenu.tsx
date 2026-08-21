@@ -1,6 +1,7 @@
-import { Building2, UserPlus, FlaskConical, Stethoscope, UserCog, ChevronRight } from "lucide-react"
+import { Building2, UserPlus, FlaskConical, Stethoscope, UserCog, ChevronRight, Calendar } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { BottomSheet } from "../ui/BottomSheet"
+import { useAuth } from "@/context/AuthContext"
 
 type QuickAddMenuProps = {
   isOpen: boolean;
@@ -17,43 +18,66 @@ export function QuickAddMenu({ isOpen, onClose }: QuickAddMenuProps) {
     }, 150); // wait for bottom sheet animation
   }
 
-  const options = [
-    {
-      title: "Add Department",
-      description: "Create new department in your hospital",
-      icon: Building2,
-      path: "/add-department",
-      color: "text-blue-600 bg-blue-50 border-blue-100"
-    },
-    {
-      title: "Add Doctor",
-      description: "Add doctor with specialization & availability",
-      icon: UserPlus,
-      path: "/add-doctor",
-      color: "text-emerald-600 bg-emerald-50 border-emerald-100"
-    },
-    {
-      title: "Add Lab",
-      description: "Add laboratory and its services",
-      icon: FlaskConical,
-      path: "/add-lab",
-      color: "text-purple-600 bg-purple-50 border-purple-100"
-    },
-    {
-      title: "Add Nurse",
-      description: "Add nurse for home nursing & assignments",
-      icon: Stethoscope,
-      path: "/add-nurse",
-      color: "text-orange-600 bg-orange-50 border-orange-100"
-    },
-    {
-      title: "Add Receptionist",
-      description: "Add receptionist and front office staff",
-      icon: UserCog,
-      path: "/add-receptionist",
-      color: "text-pink-600 bg-pink-50 border-pink-100"
-    }
-  ];
+  const { role } = useAuth();
+
+  let options: any[] = [];
+
+  if (role === 'admin') {
+    options = [
+      {
+        title: "Add Department",
+        description: "Create new department in your hospital",
+        icon: Building2,
+        path: "/add-department",
+        color: "text-blue-600 bg-blue-50 border-blue-100"
+      },
+      {
+        title: "Add Doctor",
+        description: "Add doctor with specialization & availability",
+        icon: UserPlus,
+        path: "/add-doctor",
+        color: "text-emerald-600 bg-emerald-50 border-emerald-100"
+      },
+      {
+        title: "Add Lab",
+        description: "Add laboratory and its services",
+        icon: FlaskConical,
+        path: "/add-lab",
+        color: "text-purple-600 bg-purple-50 border-purple-100"
+      },
+      {
+        title: "Add Nurse",
+        description: "Add nurse for home nursing & assignments",
+        icon: Stethoscope,
+        path: "/add-nurse",
+        color: "text-orange-600 bg-orange-50 border-orange-100"
+      },
+      {
+        title: "Add Receptionist",
+        description: "Add receptionist and front office staff",
+        icon: UserCog,
+        path: "/add-receptionist",
+        color: "text-pink-600 bg-pink-50 border-pink-100"
+      }
+    ];
+  } else if (role === 'receptionist') {
+    options = [
+      {
+        title: "Register Patient",
+        description: "Register a new patient",
+        icon: UserPlus,
+        path: "/receptionist/check-in", 
+        color: "text-blue-600 bg-blue-50 border-blue-100"
+      },
+      {
+        title: "Book Appointment",
+        description: "Schedule a new appointment",
+        icon: Calendar,
+        path: "/receptionist/book-appointment", 
+        color: "text-emerald-600 bg-emerald-50 border-emerald-100"
+      }
+    ];
+  }
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose}>

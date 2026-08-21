@@ -1,9 +1,11 @@
-import { Moon, Sun, Globe } from "lucide-react"
+import { Moon, Sun, Globe, ArrowLeft } from "lucide-react"
 import { motion } from "framer-motion"
 import { useTheme } from "@/context/ThemeContext"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 
 export function Settings() {
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { i18n } = useTranslation();
 
@@ -14,10 +16,15 @@ export function Settings() {
 
   return (
     <div className="flex flex-col bg-white dark:bg-gray-900 min-h-[calc(100vh-80px)] pb-24 transition-colors">
+      <div className="sticky top-0 z-30 bg-white dark:bg-gray-900 pt-4 pb-3 px-4 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">App Settings</h1>
+      </div>
       <div className="p-4 flex flex-col gap-6">
         
         <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">App Settings</h2>
 
           <div className="flex flex-col gap-4">
             

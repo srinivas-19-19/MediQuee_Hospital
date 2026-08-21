@@ -1,4 +1,4 @@
-import { Bell, MapPin, ChevronDown } from "lucide-react"
+import { Bell, MapPin, ChevronDown, LogOut } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 export function LabHeader() {
@@ -15,13 +15,25 @@ export function LabHeader() {
             LAB
           </div>
         </div>
-        <button
-          onClick={() => navigate('/lab/notifications')}
-          className="relative p-2 -mr-2 text-[#667085] hover:text-[#172033] transition-colors md:hidden"
-        >
-          <Bell className="w-[22px] h-[22px]" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full border border-white" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => navigate('/lab/notifications')}
+            className="relative p-2 text-[#667085] hover:text-[#172033] transition-colors md:hidden"
+          >
+            <Bell className="w-[22px] h-[22px]" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full border border-white" />
+          </button>
+          <button 
+            onClick={() => {
+              localStorage.removeItem('auth');
+              localStorage.removeItem('role');
+              window.location.href = '/MediQuee_Hospital/login';
+            }} 
+            className="p-2 -mr-2 text-[#667085] hover:text-red-500 transition-colors md:hidden"
+          >
+            <LogOut className="w-[22px] h-[22px]" />
+          </button>
+        </div>
       </div>
 
       {/* Desktop Notification & Profile - Hidden on mobile, shown on desktop right aligned */}
@@ -39,6 +51,16 @@ export function LabHeader() {
         >
           <Bell className="w-[20px] h-[20px]" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full border border-white" />
+        </button>
+        <button 
+          onClick={() => {
+            localStorage.removeItem('auth');
+            localStorage.removeItem('role');
+            window.location.href = '/MediQuee_Hospital/login';
+          }} 
+          className="p-2 text-[#667085] hover:text-red-500 transition-colors bg-gray-50 rounded-full border border-gray-100"
+        >
+          <LogOut className="w-[20px] h-[20px]" />
         </button>
       </div>
 

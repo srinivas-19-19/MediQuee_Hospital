@@ -2,6 +2,8 @@ import { ArrowUp, Clock, Users, IndianRupee, Calendar, FileText, ChevronDown, St
 import { motion } from "framer-motion"
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts'
 import { useNavigate } from "react-router-dom"
+import { PromoCarousel } from "../components/PromoCarousel"
+
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -51,7 +53,7 @@ export function Dashboard() {
     >
       {/* Greeting */}
       <div className="flex flex-col gap-1">
-        <h1 className="text-[22px] font-semibold text-[#172033]">Good morning, Admin 👋</h1>
+        <h1 className="text-[22px] font-semibold text-[#172033]">Good morning, City Care Hospital 👋</h1>
         <p className="text-[14px] text-[#667085]">Here's what's happening at your hospital today.</p>
       </div>
 
@@ -125,6 +127,8 @@ export function Dashboard() {
           </div>
         </motion.div>
       </div>
+
+      <PromoCarousel />
 
       {/* Revenue Trend Chart */}
       <motion.div variants={item} className="bg-white rounded-2xl border border-gray-100/50 shadow-[0_1px_2px_rgba(0,0,0,0.02)] p-4 flex flex-col gap-4">

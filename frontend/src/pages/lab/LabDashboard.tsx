@@ -50,7 +50,7 @@ export function LabDashboard() {
 
       {/* Greeting */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <p className="text-[22px] md:text-[28px] font-bold text-[#172033]">{getGreeting()} 👋</p>
+        <p className="text-[22px] md:text-[28px] font-bold text-[#172033]">{getGreeting()}, MediQuee Lab 👋</p>
         <p className="text-[14px] md:text-[16px] text-[#667085] mt-0.5 md:mt-1">Here's what's happening at your lab today.</p>
       </motion.div>
 

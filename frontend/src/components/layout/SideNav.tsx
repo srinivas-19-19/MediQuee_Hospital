@@ -27,8 +27,9 @@ export function SideNav({ onQuickAdd }: { onQuickAdd: () => void }) {
       case 'receptionist':
         return [
           { to: '/receptionist', icon: LayoutGrid, label: 'Dashboard' },
+          { to: '/receptionist/queue', icon: Users, label: 'Queue' },
+          { to: '/patients', icon: User, label: 'Patients' },
           { to: '/appointments', icon: Calendar, label: 'Appointments' },
-          { to: '/patients', icon: Users, label: 'Patients Queue' },
           { to: '/profile', icon: User, label: 'Profile' },
         ];
       case 'admin':
@@ -70,15 +71,17 @@ export function SideNav({ onQuickAdd }: { onQuickAdd: () => void }) {
         })}
       </nav>
 
-      {/* Quick Add Button */}
-      <div className="mt-auto mb-4">
-        <button 
-          onClick={onQuickAdd}
-          className="w-full bg-primary text-white p-4 rounded-xl shadow-md flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors">
-          <Plus className="w-5 h-5" />
-          <span className="font-semibold">Quick Add</span>
-        </button>
-      </div>
+      {/* Quick Add Button (Admin Only) */}
+      {role === 'admin' ? (
+        <div className="mt-auto mb-4">
+          <button 
+            onClick={onQuickAdd}
+            className="w-full bg-primary text-white p-4 rounded-xl shadow-md flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors">
+            <Plus className="w-5 h-5" />
+            <span className="font-semibold">Quick Add</span>
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

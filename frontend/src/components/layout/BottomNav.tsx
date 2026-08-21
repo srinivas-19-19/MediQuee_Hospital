@@ -32,8 +32,9 @@ export function BottomNav({ onQuickAdd }: { onQuickAdd: () => void }) {
       case 'receptionist':
         return [
           { to: '/receptionist', icon: LayoutGrid, label: 'Home' },
+          { to: '/receptionist/queue', icon: Users, label: 'Queue' },
+          { to: '/patients', icon: User, label: 'Patients' },
           { to: '/appointments', icon: Calendar, label: 'Agenda' },
-          { to: '/patients', icon: Users, label: 'Queue' },
           { to: '/profile', icon: User, label: 'Profile' },
         ];
       case 'admin':
@@ -48,8 +49,8 @@ export function BottomNav({ onQuickAdd }: { onQuickAdd: () => void }) {
   }
 
   const links = getLinks();
-  const leftLinks = links.slice(0, 2);
-  const rightLinks = links.slice(2, 4);
+  const leftLinks = links.slice(0, Math.ceil(links.length / 2));
+  const rightLinks = links.slice(Math.ceil(links.length / 2));
 
   const renderLink = (link: any) => {
     const Icon = link.icon;
@@ -83,14 +84,18 @@ export function BottomNav({ onQuickAdd }: { onQuickAdd: () => void }) {
         
         {leftLinks.map(renderLink)}
 
-        {/* FAB - Quick Add */}
-        <div className="relative -top-7 px-2">
-          <button 
-            onClick={onQuickAdd}
-            className="w-[56px] h-[56px] bg-primary text-white rounded-full shadow-[0_8px_16px_rgba(23,105,224,0.25)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all interactive-element">
-            <Plus className="w-7 h-7" strokeWidth={2.5} />
-          </button>
-        </div>
+        {/* FAB - Quick Add (Admin Only) */}
+        {role === 'admin' ? (
+          <div className="relative -top-7 px-2">
+            <button 
+              onClick={onQuickAdd}
+              className="w-[56px] h-[56px] bg-primary text-white rounded-full shadow-[0_8px_16px_rgba(23,105,224,0.25)] flex items-center justify-center hover:scale-105 active:scale-95 transition-all interactive-element">
+              <Plus className="w-7 h-7" strokeWidth={2.5} />
+            </button>
+          </div>
+        ) : (
+          <div className="w-[56px] px-2"></div>
+        )}
 
         {rightLinks.map(renderLink)}
       </div>

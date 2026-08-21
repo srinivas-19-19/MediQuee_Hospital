@@ -1,5 +1,4 @@
-import { motion } from "framer-motion"
-import { Calendar, Video, Clock, Users, ArrowRight, Activity, Phone } from "lucide-react"
+import { Video, Clock, Users, ArrowRight, Activity } from "lucide-react"
 
 export function DoctorDashboard() {
   const nextPatient = {

@@ -1,5 +1,4 @@
-import { motion } from "framer-motion"
-import { Video, Phone, Users, Clock, ArrowRight, ShieldCheck, ArrowLeft } from "lucide-react"
+import { Video, Phone, ShieldCheck, ArrowLeft } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 export function VideoConsultations() {

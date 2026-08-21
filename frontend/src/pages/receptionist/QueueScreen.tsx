@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ArrowRight, Clock, ChevronLeft, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ArrowRight, Clock, ArrowLeft } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueueStateMachine } from '../../services/useQueueStateMachine';
 import { type QueueStatus, receptionistApi } from '../../services/receptionistApi';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Search, Calendar, Clock, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Search, Calendar, Clock, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { receptionistApi, type Patient } from '../../services/receptionistApi';
 

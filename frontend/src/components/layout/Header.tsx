@@ -1,4 +1,4 @@
-import { Bell, MapPin, ChevronDown, LogOut } from "lucide-react"
+import { Bell, LogOut } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 

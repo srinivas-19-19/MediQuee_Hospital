@@ -20,7 +20,9 @@ export function RoleProtectedRoute({ children, allowedRoles }: Props) {
     if (role === 'doctor') return <Navigate to="/doctor" replace />
     if (role === 'nurse') return <Navigate to="/nurse" replace />
     if (role === 'receptionist') return <Navigate to="/receptionist" replace />
-    return <Navigate to="/dashboard" replace />
+    
+    // Fallback for unknown/invalid roles to prevent infinite redirect loop
+    return <Navigate to="/login" replace />
   }
 
   return children ? <>{children}</> : <Outlet />

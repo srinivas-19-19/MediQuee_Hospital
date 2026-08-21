@@ -1,4 +1,4 @@
-import { User, Bell, Shield, Settings, LogOut, ChevronRight, Building2, Users, LayoutGrid, Key, HelpCircle, MessageSquare, Calendar, Home } from "lucide-react"
+import { User, Bell, Shield, Settings, LogOut, ChevronRight, Building2, Users, LayoutGrid, Key, HelpCircle, MessageSquare } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { useAuth } from "@/context/AuthContext"
@@ -7,7 +7,7 @@ import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
 
 export function Profile() {
   const navigate = useNavigate();
-  const { logout, role } = useAuth();
+  const { logout } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {

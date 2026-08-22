@@ -17,28 +17,12 @@ const options = [
     iconColor: "text-primary",
   },
   {
-    icon: ClipboardList,
-    title: "Create Test Order",
-    description: "Create a new patient test order",
-    route: "/lab/create-order",
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-  },
-  {
     icon: Package,
     title: "Add Test Package",
     description: "Bundle tests into a package",
     route: "/lab/add-package",
     iconBg: "bg-purple-50",
     iconColor: "text-purple-600",
-  },
-  {
-    icon: Home,
-    title: "Schedule Home Collection",
-    description: "Book a home sample collection",
-    route: "/lab/home-collection/create",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
   },
   {
     icon: Upload,

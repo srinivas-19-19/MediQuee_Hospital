@@ -1,94 +1,142 @@
 import { motion } from "framer-motion"
-import { Home, MapPin, Phone, CheckCircle, Clock } from "lucide-react"
+import { Home, MapPin, Phone, CheckCircle, Clock, Bell, Play, ChevronRight } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useNavigate } from "react-router-dom"
 
 export function NurseDashboard() {
+  const navigate = useNavigate();
+
   const stats = [
-    { title: "Today's Bookings", value: "6", icon: Home, color: "text-blue-600 bg-blue-50" },
-    { title: "In Progress", value: "1", icon: Clock, color: "text-orange-600 bg-orange-50" },
-    { title: "Completed", value: "3", icon: CheckCircle, color: "text-green-600 bg-green-50" },
+    { title: "Visits Today", value: "6", color: "text-[#0A1A3D] bg-white border-gray-200" },
+    { title: "Upcoming", value: "2", color: "text-[#1B5DF1] bg-white border-blue-100" },
+    { title: "In Progress", value: "1", color: "text-orange-600 bg-white border-orange-100" },
+    { title: "Completed", value: "3", color: "text-emerald-600 bg-white border-emerald-100" },
   ];
 
-  const upcomingVisits = [
-    { id: 1, name: "Sneha Patel", time: "11:00 AM", service: "Post-op Care", address: "123 Park Street, City", status: "Next" },
-    { id: 2, name: "Arun Verma", time: "02:00 PM", service: "Wound Dressing", address: "45 Lake View Apts", status: "Scheduled" },
+  const todayVisits = [
+    { id: 1, name: "Ramesh Kumar", time: "10:30 AM", service: "Post-op Care", status: "Upcoming" },
+    { id: 2, name: "Priya Sharma", time: "12:00 PM", service: "Injection / Dressing", status: "Completed" },
+    { id: 3, name: "Mohammed Ali", time: "02:30 PM", service: "Home Care", status: "Upcoming" },
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col bg-gray-50/30 min-h-screen pb-[100px]">
+      
+      {/* Header */}
+      <div className="pt-8 pb-4 px-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Nurse Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your home nursing bookings.</p>
+          <p className="text-gray-500 text-[14px] font-medium mb-1">Good Morning, Nurse Jane</p>
+          <h1 className="text-[22px] font-black text-[#0A1A3D] tracking-tight">Home Nursing</h1>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 px-4 mb-6">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4"
+            transition={{ delay: i * 0.05 }}
+            className={cn("p-4 rounded-[16px] border shadow-[0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-center", stat.color)}
           >
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${stat.color}`}>
-              <stat.icon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
-              <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
-            </div>
+            <span className="text-[12px] font-bold opacity-80 uppercase tracking-wider mb-1">{stat.title}</span>
+            <span className="text-[24px] font-black">{stat.value}</span>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      {/* Next Visit Prominent Card */}
+      <div className="px-4 mb-6">
+        <h3 className="text-[14px] font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Next Visit</h3>
+        
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-br from-[#1B5DF1] to-blue-700 rounded-[24px] p-5 text-white shadow-[0_8px_24px_rgba(27,93,241,0.25)] relative overflow-hidden"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Upcoming Home Visits</h2>
-            <button className="text-primary text-sm font-semibold hover:underline">View Map</button>
-          </div>
-          <div className="flex flex-col gap-4">
-            {upcomingVisits.map(visit => (
-              <div key={visit.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-gray-50 hover:border-blue-100 hover:shadow-md transition-all gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold shrink-0 mt-1">
-                    {visit.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-bold text-gray-900 text-lg">{visit.name}</h4>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        visit.status === 'Next' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {visit.status}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium text-primary mb-2">{visit.service}</p>
-                    <div className="flex flex-col gap-1.5 text-xs text-gray-500">
-                      <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {visit.time}</span>
-                      <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" /> {visit.address}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
-                  <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-xl font-semibold hover:bg-gray-100 transition-colors text-sm">
-                    <Phone className="w-4 h-4" /> Call
-                  </button>
-                  <button className="flex-1 md:flex-none px-4 py-2 bg-primary text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors text-sm">
-                    Start Visit
-                  </button>
-                </div>
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-white/10 blur-2xl"></div>
+          
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-[13px]">
+                <Clock className="w-4 h-4" /> 10:30 AM
               </div>
-            ))}
+              <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-white/20 text-white">
+                Upcoming
+              </span>
+            </div>
+            
+            <div className="mb-5">
+              <h4 className="font-black text-[24px] tracking-tight mb-1">Ramesh Kumar</h4>
+              <p className="text-blue-100 font-medium flex items-center gap-1.5">
+                Post-operative Care
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 text-[13px] text-blue-100 mb-5 bg-black/10 p-2.5 rounded-xl inline-flex">
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span>2.4 km away</span>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => navigate('/nurse/visits')}
+                className="flex-1 bg-white text-[#1B5DF1] py-3 rounded-[16px] font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"
+              >
+                View Visit
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Today's Visits List */}
+      <div className="px-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between px-1 mb-1">
+          <h3 className="text-[14px] font-bold text-[#0A1A3D] uppercase tracking-wider">Today's Visits</h3>
+          <button 
+            onClick={() => navigate('/nurse/visits')}
+            className="text-[#1B5DF1] text-[13px] font-bold flex items-center"
+          >
+            View All <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <div className="flex flex-col gap-2">
+          {todayVisits.map((visit, i) => (
+            <motion.div 
+              key={visit.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 + (i * 0.1) }}
+              className="bg-white border border-gray-100 rounded-2xl p-3.5 flex items-center gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+            >
+              <div className="flex flex-col items-center min-w-[65px] border-r border-gray-100 pr-3">
+                <span className="text-[14px] font-black text-[#0A1A3D] leading-none">{visit.time.split(' ')[0]}</span>
+                <span className="text-[11px] font-bold text-gray-400 mt-1">{visit.time.split(' ')[1]}</span>
+              </div>
+              
+              <div className="flex-1 flex flex-col justify-center">
+                <h4 className="font-bold text-[15px] text-[#0A1A3D] mb-0.5">{visit.name}</h4>
+                <p className="text-[12px] font-medium text-[#667085]">{visit.service}</p>
+              </div>
+              
+              <div>
+                {visit.status === 'Completed' ? (
+                  <CheckCircle className="w-6 h-6 text-emerald-500" />
+                ) : (
+                  <span className="text-[11px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">Upcoming</span>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
     </div>
   )
 }
+

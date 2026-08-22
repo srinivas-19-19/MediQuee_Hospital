@@ -14,13 +14,13 @@ const summaryStats = [
 const filters = ['All', 'Pending', 'Ready', 'Delivered']
 
 const allReports = [
-  { id: 'MQ-10285', patient: 'Priya Sharma', test: 'Thyroid Profile', date: '14 Aug', status: 'ready' as const },
-  { id: 'MQ-10283', patient: 'Arun Krishnan', test: 'CBC + ESR', date: '13 Aug', status: 'delivered' as const },
-  { id: 'MQ-10282', patient: 'Sneha Gupta', test: 'Lipid Profile', date: '13 Aug', status: 'ready' as const },
-  { id: 'MQ-10284', patient: 'Ramesh Kumar', test: 'CBC + Lipid Profile', date: '14 Aug', status: 'pending' as const },
-  { id: 'MQ-10281', patient: 'Farida Begum', test: 'Kidney Function', date: '12 Aug', status: 'delivered' as const },
-  { id: 'MQ-10280', patient: 'Ravi Verma', test: 'HbA1c', date: '12 Aug', status: 'ready' as const },
-  { id: 'MQ-10279', patient: 'Meera Pillai', test: 'Thyroid TSH', date: '11 Aug', status: 'pending' as const },
+  { id: 'MQ-10285', patient: 'Priya Sharma', test: 'Thyroid Profile', date: '14 Aug', status: 'ready' as const, type: 'In-Person' },
+  { id: 'MQ-10283', patient: 'Arun Krishnan', test: 'CBC + ESR', date: '13 Aug', status: 'delivered' as const, type: 'In-Person' },
+  { id: 'MQ-10282', patient: 'Sneha Gupta', test: 'Lipid Profile', date: '13 Aug', status: 'ready' as const, type: 'In-Person' },
+  { id: 'MQ-10284', patient: 'Ramesh Kumar', test: 'CBC + Lipid Profile', date: '14 Aug', status: 'pending' as const, type: 'In-Person' },
+  { id: 'MQ-10281', patient: 'Farida Begum', test: 'Kidney Function', date: '12 Aug', status: 'delivered' as const, type: 'In-Person' },
+  { id: 'MQ-10280', patient: 'Ravi Verma', test: 'HbA1c', date: '12 Aug', status: 'ready' as const, type: 'Home Collection' },
+  { id: 'MQ-10279', patient: 'Meera Pillai', test: 'Thyroid TSH', date: '11 Aug', status: 'pending' as const, type: 'Home Collection' },
 ]
 
 const filterMap: Record<string, string> = { 'Pending': 'pending', 'Ready': 'ready', 'Delivered': 'delivered' }
@@ -28,14 +28,19 @@ const filterMap: Record<string, string> = { 'Pending': 'pending', 'Ready': 'read
 export function LabReports() {
   const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState('All')
+  const [activeMainSection, setActiveMainSection] = useState<'In-Person' | 'Home Collection'>('In-Person')
 
-  const filtered = activeFilter === 'All' ? allReports : allReports.filter(r => r.status === filterMap[activeFilter])
+  const filtered = allReports.filter(r => {
+    const matchType = r.type === activeMainSection
+    const matchStatus = activeFilter === 'All' || r.status === filterMap[activeFilter]
+    return matchType && matchStatus
+  })
 
   return (
     <div className="flex flex-col bg-background min-h-full w-full">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md px-4 md:px-6 pt-5 md:pt-6 pb-3 md:pb-4 border-b border-gray-100/50">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-[22px] md:text-[26px] font-bold text-[#172033]">Reports</h1>
           <button
             onClick={() => navigate('/lab/upload-report')}
@@ -43,6 +48,22 @@ export function LabReports() {
           >
             <Upload className="w-4 h-4 md:w-5 md:h-5" />
             Upload
+          </button>
+        </div>
+        
+        {/* Main Sections */}
+        <div className="flex bg-gray-100/80 p-1 rounded-xl max-w-md">
+          <button 
+            onClick={() => setActiveMainSection('In-Person')}
+            className={cn("flex-1 py-2 text-[13px] font-bold rounded-lg transition-all", activeMainSection === 'In-Person' ? "bg-white text-primary shadow-sm" : "text-[#667085] hover:text-[#172033]")}
+          >
+            In-Person
+          </button>
+          <button 
+            onClick={() => setActiveMainSection('Home Collection')}
+            className={cn("flex-1 py-2 text-[13px] font-bold rounded-lg transition-all", activeMainSection === 'Home Collection' ? "bg-white text-primary shadow-sm" : "text-[#667085] hover:text-[#172033]")}
+          >
+            Home Collection
           </button>
         </div>
       </div>

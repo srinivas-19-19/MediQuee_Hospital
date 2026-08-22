@@ -1,230 +1,178 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronDown, ArrowRight, Clock, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Clock, ArrowLeft, Mic, CheckCircle2, Search, Filter } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueueStateMachine } from '../../services/useQueueStateMachine';
-import { type QueueStatus, receptionistApi } from '../../services/receptionistApi';
-import { BottomSheet } from '../../components/ui/BottomSheet';
+import { type QueueStatus } from '../../services/receptionistApi';
+import { cn } from "@/lib/utils"
 
 export function QueueScreen() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
-  const [selectedDept, setSelectedDept] = useState<string>(searchParams.get('dept') || '');
-  const [isDeptSheetOpen, setIsDeptSheetOpen] = useState(false);
-  const [selectedQueueItem, setSelectedQueueItem] = useState<any>(null);
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'WAITING' | 'IN_CONSULTATION' | 'COMPLETED'>('WAITING');
+  
+  const deptQuery = searchParams.get('dept');
+  const [selectedDept, setSelectedDept] = useState(deptQuery || 'All Depts');
+  
+  const departments = ['All Depts', 'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics'];
 
-  const { queue, updateStatus, isValidTransition } = useQueueStateMachine(selectedDept || undefined);
-
-  useEffect(() => {
-    receptionistApi.getDepartments().then(setDepartments);
-  }, []);
-
-  const handleDeptSelect = (deptId: string) => {
-    setSelectedDept(deptId);
-    setSearchParams(deptId ? { dept: deptId } : {});
-    setIsDeptSheetOpen(false);
-  };
-
-  const getStatusColor = (status: QueueStatus) => {
-    switch (status) {
-      case 'ARRIVED': return 'text-purple-600 bg-purple-50 border-purple-100';
-      case 'WAITING': return 'text-orange-600 bg-orange-50 border-orange-100';
-      case 'CALLED': return 'text-blue-600 bg-blue-50 border-blue-100';
-      case 'IN_CONSULTATION': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
-      case 'COMPLETED': return 'text-gray-600 bg-gray-50 border-gray-100';
-      case 'CANCELLED': return 'text-red-600 bg-red-50 border-red-100';
-      default: return 'text-gray-600 bg-gray-50';
-    }
-  };
-
-  const getPrimaryAction = (status: QueueStatus) => {
-    switch (status) {
-      case 'ARRIVED': return { label: 'Move to Waiting', next: 'WAITING' };
-      case 'WAITING': return { label: 'Call Patient', next: 'CALLED' };
-      case 'CALLED': return { label: 'Start Consultation', next: 'IN_CONSULTATION' };
-      case 'IN_CONSULTATION': return { label: 'Complete', next: 'COMPLETED' };
-      default: return null;
-    }
-  };
+  const { queue, updateStatus } = useQueueStateMachine(selectedDept === 'All Depts' ? undefined : selectedDept);
 
   // Fake data if queue is empty because API is not returning real data yet
   const displayQueue = queue.length > 0 ? queue : [
-    { id: 'q1', token: 'OP-103', patientName: 'Rahul Kumar', departmentName: 'General Medicine', doctorName: 'Dr. Sharma', arrivalTime: '10:15 AM', status: 'IN_CONSULTATION' as QueueStatus },
-    { id: 'q2', token: 'OP-104', patientName: 'Priya Patel', departmentName: 'General Medicine', doctorName: 'Dr. Sharma', arrivalTime: '10:30 AM', status: 'CALLED' as QueueStatus },
-    { id: 'q3', token: 'OP-105', patientName: 'Amit Singh', departmentName: 'General Medicine', doctorName: 'Dr. Verma', arrivalTime: '10:45 AM', status: 'WAITING' as QueueStatus },
-    { id: 'q4', token: 'OP-106', patientName: 'Sneha Reddy', departmentName: 'General Medicine', doctorName: 'Dr. Verma', arrivalTime: '11:00 AM', status: 'ARRIVED' as QueueStatus },
-  ].filter(q => selectedDept ? q.departmentName === departments.find(d => d.id === selectedDept)?.name : true);
+    { id: 'q1', token: 'OP-101', patientName: 'Rahul Kumar', doctorName: 'Dr. Sharma', arrivalTime: '10:15 AM', status: 'IN_CONSULTATION' as QueueStatus },
+    { id: 'q2', token: 'OP-102', patientName: 'Priya Patel', doctorName: 'Dr. Sharma', arrivalTime: '10:30 AM', status: 'COMPLETED' as QueueStatus },
+    { id: 'q3', token: 'OP-103', patientName: 'Amit Singh', doctorName: 'Dr. Iyer', arrivalTime: '10:45 AM', status: 'WAITING' as QueueStatus },
+    { id: 'q4', token: 'OP-104', patientName: 'Sneha Reddy', doctorName: 'Dr. Iyer', arrivalTime: '11:00 AM', status: 'WAITING' as QueueStatus },
+  ];
 
-  const waitingCount = displayQueue.filter(q => q.status === 'WAITING' || q.status === 'ARRIVED').length;
-  const calledCount = displayQueue.filter(q => q.status === 'CALLED').length;
-  const inConsultCount = displayQueue.filter(q => q.status === 'IN_CONSULTATION').length;
+  const filteredQueue = displayQueue.filter(q => {
+    if (activeTab === 'WAITING') return q.status === 'WAITING' || q.status === 'ARRIVED';
+    if (activeTab === 'IN_CONSULTATION') return q.status === 'IN_CONSULTATION' || q.status === 'CALLED';
+    if (activeTab === 'COMPLETED') return q.status === 'COMPLETED';
+    return false;
+  });
 
   return (
-    <div className="flex flex-col bg-gray-50 min-h-[calc(100vh-80px)] pb-24 relative">
+    <div className="flex flex-col bg-gray-50/30 min-h-screen pb-[100px]">
       
       {/* Sticky Header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/receptionist')} className="p-2 -ml-2 rounded-full hover:bg-gray-50 transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <h1 className="text-[18px] font-bold text-gray-900">OP Queue</h1>
-          </div>
-          <button 
-            onClick={() => setIsDeptSheetOpen(true)}
-            className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-semibold text-gray-700 active:bg-gray-100 transition-colors"
-          >
-            {selectedDept ? departments.find(d => d.id === selectedDept)?.name : 'All Depts'}
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] pt-6 pb-2 px-4 flex flex-col gap-5">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/receptionist')} className="p-2 -ml-2 rounded-xl hover:bg-gray-50 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gray-800" />
           </button>
+          <div className="flex flex-col">
+            <h1 className="text-[20px] font-black text-[#0A1A3D] tracking-tight">{selectedDept} Queue</h1>
+            <span className="text-[12px] font-bold text-gray-500">OP Department</span>
+          </div>
         </div>
-
-        {/* Summary Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          <div className="flex flex-col shrink-0 px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-100">
-            <span className="text-[10px] font-bold uppercase text-orange-600 mb-0.5">Waiting</span>
-            <span className="text-sm font-black text-orange-700">{waitingCount}</span>
-          </div>
-          <div className="flex flex-col shrink-0 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100">
-            <span className="text-[10px] font-bold uppercase text-blue-600 mb-0.5">Called</span>
-            <span className="text-sm font-black text-blue-700">{calledCount}</span>
-          </div>
-          <div className="flex flex-col shrink-0 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
-            <span className="text-[10px] font-bold uppercase text-emerald-600 mb-0.5">In Consult</span>
-            <span className="text-sm font-black text-emerald-700">{inConsultCount}</span>
-          </div>
+        {/* Department Tiles */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+          {departments.map((dept) => (
+            <button
+              key={dept}
+              onClick={() => setSelectedDept(dept)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors border",
+                selectedDept === dept 
+                  ? "bg-[#0A1A3D] text-white border-[#0A1A3D]" 
+                  : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+              )}
+            >
+              {dept}
+            </button>
+          ))}
+        </div>
+        {/* Tabs */}
+        <div className="flex bg-gray-100/80 p-1 rounded-xl">
+          <button 
+            onClick={() => setActiveTab('WAITING')}
+            className={cn("flex-1 py-2 text-[13px] font-bold rounded-lg transition-all", activeTab === 'WAITING' ? "bg-white text-orange-600 shadow-sm" : "text-[#667085] hover:text-[#172033]")}
+          >
+            Waiting
+          </button>
+          <button 
+            onClick={() => setActiveTab('IN_CONSULTATION')}
+            className={cn("flex-1 py-2 text-[13px] font-bold rounded-lg transition-all", activeTab === 'IN_CONSULTATION' ? "bg-white text-[#1B5DF1] shadow-sm" : "text-[#667085] hover:text-[#172033]")}
+          >
+            In Consult
+          </button>
+          <button 
+            onClick={() => setActiveTab('COMPLETED')}
+            className={cn("flex-1 py-2 text-[13px] font-bold rounded-lg transition-all", activeTab === 'COMPLETED' ? "bg-white text-emerald-600 shadow-sm" : "text-[#667085] hover:text-[#172033]")}
+          >
+            Completed
+          </button>
         </div>
       </div>
 
       <div className="p-4 flex flex-col gap-4">
-        {displayQueue.map((item, i) => {
-          const action = getPrimaryAction(item.status);
-          
-          return (
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-[14px] font-bold text-[#0A1A3D]">
+            {filteredQueue.length} Patients
+          </span>
+          <div className="flex gap-2">
+            <button className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500">
+              <Search className="w-4 h-4" />
+            </button>
+            <button className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500">
+              <Filter className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <AnimatePresence mode="popLayout">
+          {filteredQueue.length > 0 ? filteredQueue.map((item, i) => (
             <motion.div 
+              layout
               key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: i * 0.05 }}
-              onClick={() => setSelectedQueueItem(item)}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden active:scale-[0.98] transition-transform"
+              className="bg-white rounded-[20px] border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden"
             >
-              <div className="p-4 flex items-start justify-between border-b border-gray-50">
-                <div className="flex items-start gap-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${getStatusColor(item.status)}`}>
-                    <span className="font-black tracking-tight">{item.token.split('-')[1]}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <h3 className="font-bold text-[16px] text-gray-900">{item.patientName}</h3>
-                    <p className="text-xs font-medium text-gray-500 mt-0.5">{item.departmentName} • {item.doctorName}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Clock className="w-3 h-3 text-gray-400" />
-                      <span className="text-xs text-gray-500 font-medium">Arr: {item.arrivalTime}</span>
-                    </div>
-                  </div>
+              <div className="p-4 flex items-center gap-4">
+                <div className={cn(
+                  "w-16 h-16 rounded-[16px] flex flex-col items-center justify-center shrink-0 border-2",
+                  activeTab === 'WAITING' ? "bg-orange-50 border-orange-100 text-orange-600" :
+                  activeTab === 'IN_CONSULTATION' ? "bg-[#EBF5FF] border-[#1B5DF1]/20 text-[#1B5DF1]" :
+                  "bg-emerald-50 border-emerald-100 text-emerald-600"
+                )}>
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 opacity-80">Token</span>
+                  <span className="font-black text-[20px] tracking-tight leading-none">{item.token.split('-')[1]}</span>
                 </div>
-                <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${getStatusColor(item.status)}`}>
-                  {item.status}
+                
+                <div className="flex flex-col flex-1">
+                  <h3 className="font-bold text-[17px] text-[#0A1A3D]">{item.patientName}</h3>
+                  <p className="text-[13px] font-medium text-gray-500 mt-0.5">{item.doctorName}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Clock className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-[12px] text-gray-500 font-bold">Arr: {item.arrivalTime}</span>
+                  </div>
                 </div>
               </div>
               
-              {action && (
-                <div className="bg-gray-50 px-4 py-3 flex justify-end">
+              {activeTab === 'WAITING' && (
+                <div className="bg-gray-50 px-4 py-3 flex justify-end gap-2 border-t border-gray-100">
                   <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateStatus(item.id, action.next as QueueStatus);
-                    }}
-                    className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm hover:bg-blue-700 active:bg-blue-800 transition-colors"
+                    onClick={() => updateStatus(item.id, 'IN_CONSULTATION')}
+                    className="flex-1 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
                   >
-                    {action.label} <ArrowRight className="w-3 h-3" />
+                    Send to Doctor
+                  </button>
+                  <button 
+                    onClick={() => updateStatus(item.id, 'CALLED')}
+                    className="flex-1 bg-orange-600 text-white px-4 py-2.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 shadow-sm shadow-orange-600/20 hover:bg-orange-700 transition-colors"
+                  >
+                    <Mic className="w-4 h-4" /> Call Patient
+                  </button>
+                </div>
+              )}
+              
+              {activeTab === 'IN_CONSULTATION' && (
+                <div className="bg-[#EBF5FF]/50 px-4 py-3 flex justify-end gap-2 border-t border-[#1B5DF1]/10">
+                  <button 
+                    onClick={() => updateStatus(item.id, 'COMPLETED')}
+                    className="w-full bg-[#1B5DF1] text-white px-4 py-2.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 shadow-sm shadow-[#1B5DF1]/20 hover:bg-blue-700 transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Mark Completed
                   </button>
                 </div>
               )}
             </motion.div>
-          );
-        })}
+          )) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-12 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-[16px] font-bold text-[#0A1A3D]">Queue is empty</h3>
+              <p className="text-gray-500 text-[13px] font-medium mt-1">No patients in this queue status.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      <BottomSheet isOpen={isDeptSheetOpen} onClose={() => setIsDeptSheetOpen(false)}>
-        <div className="p-4 pb-8 flex flex-col gap-2">
-          <h2 className="text-lg font-bold mb-2">Select Department</h2>
-          <button 
-            onClick={() => handleDeptSelect('')}
-            className={`p-4 rounded-xl text-left font-semibold ${!selectedDept ? 'bg-blue-50 text-primary border border-blue-100' : 'bg-gray-50 text-gray-700 border border-transparent'}`}
-          >
-            All Departments
-          </button>
-          {departments.map(dept => (
-            <button 
-              key={dept.id}
-              onClick={() => handleDeptSelect(dept.id)}
-              className={`p-4 rounded-xl text-left font-semibold ${selectedDept === dept.id ? 'bg-blue-50 text-primary border border-blue-100' : 'bg-gray-50 text-gray-700 border border-transparent hover:bg-gray-100'}`}
-            >
-              {dept.name}
-            </button>
-          ))}
-        </div>
-      </BottomSheet>
-
-      {/* Action Sheet for specific queue item */}
-      <BottomSheet isOpen={!!selectedQueueItem} onClose={() => setSelectedQueueItem(null)}>
-        {selectedQueueItem && (
-          <div className="p-5 pb-8 flex flex-col gap-6">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{selectedQueueItem.token}</span>
-                <h2 className="text-xl font-bold text-gray-900">{selectedQueueItem.patientName}</h2>
-              </div>
-              <div className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border ${getStatusColor(selectedQueueItem.status)}`}>
-                {selectedQueueItem.status}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider border-b border-gray-100 pb-2">Update Status</h3>
-              
-              <div className="grid grid-cols-2 gap-3">
-                {['ARRIVED', 'WAITING', 'CALLED', 'IN_CONSULTATION', 'COMPLETED'].map((status) => {
-                  const isValid = isValidTransition(selectedQueueItem.status, status as QueueStatus);
-                  const isCurrent = selectedQueueItem.status === status;
-                  return (
-                    <button
-                      key={status}
-                      disabled={!isValid && !isCurrent}
-                      onClick={() => {
-                        updateStatus(selectedQueueItem.id, status as QueueStatus);
-                        setSelectedQueueItem(null);
-                      }}
-                      className={`p-3 rounded-xl border text-left font-semibold text-sm transition-all ${
-                        isCurrent ? 'bg-blue-50 border-primary text-primary shadow-sm ring-1 ring-primary/20' :
-                        isValid ? 'bg-white border-gray-200 text-gray-700 hover:border-primary active:bg-gray-50' : 
-                        'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed opacity-60'
-                      }`}
-                    >
-                      {status.replace('_', ' ')}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {isValidTransition(selectedQueueItem.status, 'CANCELLED') && (
-                <button 
-                  onClick={() => {
-                    updateStatus(selectedQueueItem.id, 'CANCELLED');
-                    setSelectedQueueItem(null);
-                  }}
-                  className="mt-2 p-3 bg-red-50 border border-red-100 text-red-600 rounded-xl font-semibold text-sm"
-                >
-                  Cancel OP
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </BottomSheet>
     </div>
   );
 }

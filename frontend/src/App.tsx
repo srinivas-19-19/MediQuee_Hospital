@@ -7,12 +7,17 @@ import "./i18n"
 
 // Role Dashboards
 import { DoctorDashboard } from "./pages/doctor/DoctorDashboard"
+import { DoctorOPs } from "./pages/doctor/DoctorOPs"
 import { VideoConsultations } from "./pages/doctor/VideoConsultations"
+import { Availability } from "./pages/doctor/Availability"
 import { NurseDashboard } from "./pages/nurse/NurseDashboard"
+import { NurseVisits } from "./pages/nurse/NurseVisits"
+import { NurseCalendar } from "./pages/nurse/NurseCalendar"
 import { ReceptionistDashboard } from "./pages/receptionist/ReceptionistDashboard"
 import { CheckIn } from "./pages/receptionist/CheckIn"
 import { BookAppointment } from "./pages/receptionist/BookAppointment"
 import { QueueScreen } from "./pages/receptionist/QueueScreen"
+import { ReceptionistAppointments } from "./pages/receptionist/ReceptionistAppointments"
 
 // Hospital layout & pages
 import { AppLayout } from "./components/layout/AppLayout"
@@ -39,6 +44,10 @@ import { PermissionsList } from "./pages/profile/PermissionsList"
 import { HelpSupport } from "./pages/profile/HelpSupport"
 import { ContactSupport } from "./pages/profile/ContactSupport"
 import { ProfileEdit } from "./pages/profile/ProfileEdit"
+import { PersonalInformation } from "./pages/profile/PersonalInformation"
+import { EPrescriptionSettings } from "./pages/profile/EPrescriptionSettings"
+import { ClinicSchedule } from "./pages/profile/ClinicSchedule"
+import { ConsultationHistory } from "./pages/profile/ConsultationHistory"
 import { AboutMediQuee } from "./pages/marketing/AboutMediQuee"
 import { BookMedicalCamp } from "./pages/marketing/BookMedicalCamp"
 import { BookMarketing } from "./pages/marketing/BookMarketing"
@@ -125,13 +134,16 @@ function AnimatedRoutes() {
           {/* Doctor Routes */}
           <Route element={<RoleProtectedRoute allowedRoles={['doctor']} />}>
             <Route path="/doctor" element={<DoctorDashboard />} />
-            <Route path="/video-consultations" element={<VideoConsultations />} />
-            {/* placeholders for future doctor-specific pages */}
+            <Route path="/doctor/ops" element={<DoctorOPs />} />
+            <Route path="/doctor/video-consultations" element={<VideoConsultations />} />
+            <Route path="/doctor/availability" element={<Availability />} />
           </Route>
 
           {/* Nurse Routes */}
           <Route element={<RoleProtectedRoute allowedRoles={['nurse']} />}>
             <Route path="/nurse" element={<NurseDashboard />} />
+            <Route path="/nurse/visits" element={<NurseVisits />} />
+            <Route path="/nurse/calendar" element={<NurseCalendar />} />
           </Route>
 
           {/* Receptionist Routes */}
@@ -140,6 +152,7 @@ function AnimatedRoutes() {
             <Route path="/receptionist/queue" element={<QueueScreen />} />
             <Route path="/receptionist/check-in" element={<CheckIn />} />
             <Route path="/receptionist/book-appointment" element={<BookAppointment />} />
+            <Route path="/receptionist/appointments" element={<ReceptionistAppointments />} />
           </Route>
 
           {/* Shared routes (require authentication, content is role-aware) */}
@@ -153,6 +166,10 @@ function AnimatedRoutes() {
           <Route path="/profile/staff/:type" element={<StaffList />} />
           <Route path="/profile/departments" element={<DepartmentsList />} />
           <Route path="/profile/permissions" element={<PermissionsList />} />
+          <Route path="/profile/personal" element={<PersonalInformation />} />
+          <Route path="/profile/erx" element={<EPrescriptionSettings />} />
+          <Route path="/profile/schedule" element={<ClinicSchedule />} />
+          <Route path="/profile/history" element={<ConsultationHistory />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/security" element={<Security />} />

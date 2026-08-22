@@ -2,15 +2,15 @@ import { Search, Filter, Calendar, ChevronDown, ArrowLeft, Plus, Play, FileText,
 import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { motion, AnimatePresence } from "framer-motion"
-import { AppointmentDetailModal } from "../components/appointments/AppointmentDetailModal"
-import { Skeleton } from "../components/ui/Skeleton"
-import { EmptyState } from "../components/ui/EmptyState"
+import { AppointmentDetailModal } from "../../components/appointments/AppointmentDetailModal"
+import { Skeleton } from "../../components/ui/Skeleton"
+import { EmptyState } from "../../components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
 
-export function Appointments() {
+export function DoctorOPs() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-  const [selectedFilter, setSelectedFilter] = useState('ops');
+  const [selectedFilter, setSelectedFilter] = useState('opd');
   const [selectedDate, setSelectedDate] = useState('14 May');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -20,11 +20,10 @@ export function Appointments() {
   const navigate = useNavigate();
 
   const filterTypes = [
-    { id: 'ops', label: 'OPs' },
-    { id: 'video', label: 'Video Consultation' },
-    { id: 'lab', label: 'Lab' },
-    { id: 'home_sample', label: 'Home Sample Collection' },
-    { id: 'home_nursing', label: 'Home Nursing' },
+    { id: 'opd', label: 'OPD' },
+    { id: 'followup', label: 'Follow Up' },
+    { id: 'new', label: 'New Patient' },
+    { id: 'all', label: 'All' },
   ];
 
   const dates = [
@@ -82,12 +81,14 @@ export function Appointments() {
       {/* Header Section */}
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl pt-6 pb-4 px-4 flex flex-col gap-6 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
         
-        {/* Header Block */}
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#0A1A3D] hover:bg-gray-100 rounded-xl transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-[22px] font-black text-[#0A1A3D] tracking-tight">Appointments</h1>
+          <div className="flex flex-col">
+            <h1 className="text-[22px] font-black text-[#0A1A3D] tracking-tight">OP Consultations</h1>
+            <span className="text-[13px] font-bold text-gray-500">Today, 14 May</span>
+          </div>
         </div>
 
         {/* Search Bar */}

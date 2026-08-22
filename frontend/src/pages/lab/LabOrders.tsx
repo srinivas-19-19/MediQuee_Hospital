@@ -5,19 +5,19 @@ import { useNavigate } from "react-router-dom"
 import { StatusBadge } from "@/components/lab/LabUI"
 import { cn } from "@/lib/utils"
 
-const services = ['All', 'Blood', 'Urine', 'Pathology', 'Imaging', 'Home Collection']
+const services = ['All', 'Blood', 'Urine', 'Pathology', 'Imaging']
 
 const dates = ['Today', '14 Aug', '13 Aug', '12 Aug', '11 Aug', '10 Aug']
 
 const allOrders = [
-  { id: 'MQ-10284', patient: 'Ramesh Kumar', test: 'CBC + Lipid Profile', sample: 'Blood', time: '10:30 AM', amount: '₹850', status: 'processing' as const, service: 'Blood' },
-  { id: 'MQ-10285', patient: 'Priya Sharma', test: 'Thyroid Profile', sample: 'Blood', time: '11:15 AM', amount: '₹650', status: 'ready' as const, service: 'Blood' },
-  { id: 'MQ-10286', patient: 'Mohammed Ali', test: 'Urine Routine', sample: 'Urine', time: '12:00 PM', amount: '₹200', status: 'pending' as const, service: 'Urine' },
-  { id: 'MQ-10287', patient: 'Lakshmi Devi', test: 'HbA1c', sample: 'Blood', time: '1:30 PM', amount: '₹450', status: 'collected' as const, service: 'Blood' },
-  { id: 'MQ-10288', patient: 'Vijay Rajan', test: 'X-Ray Chest', sample: 'Imaging', time: '2:00 PM', amount: '₹350', status: 'pending' as const, service: 'Imaging' },
-  { id: 'MQ-10289', patient: 'Sunita Patel', test: 'Liver Function Test', sample: 'Blood', time: '3:00 PM', amount: '₹750', status: 'delivered' as const, service: 'Blood' },
-  { id: 'MQ-10290', patient: 'Arjun Mehta', test: 'Urine Culture', sample: 'Urine', time: '4:30 PM', amount: '₹300', status: 'processing' as const, service: 'Urine' },
-  { id: 'MQ-10291', patient: 'Kavya Nair', test: 'CBC', sample: 'Blood (Home)', time: '9:00 AM', amount: '₹300 + ₹100', status: 'collected' as const, service: 'Home Collection' },
+  { id: 'MQ-10284', patient: 'Ramesh Kumar', test: 'CBC + Lipid Profile', sample: 'Blood', time: '10:30 AM', amount: '₹850', status: 'processing' as const, service: 'Blood', type: 'In-Person' },
+  { id: 'MQ-10285', patient: 'Priya Sharma', test: 'Thyroid Profile', sample: 'Blood', time: '11:15 AM', amount: '₹650', status: 'ready' as const, service: 'Blood', type: 'In-Person' },
+  { id: 'MQ-10286', patient: 'Mohammed Ali', test: 'Urine Routine', sample: 'Urine', time: '12:00 PM', amount: '₹200', status: 'pending' as const, service: 'Urine', type: 'In-Person' },
+  { id: 'MQ-10287', patient: 'Lakshmi Devi', test: 'HbA1c', sample: 'Blood', time: '1:30 PM', amount: '₹450', status: 'collected' as const, service: 'Blood', type: 'In-Person' },
+  { id: 'MQ-10288', patient: 'Vijay Rajan', test: 'X-Ray Chest', sample: 'Imaging', time: '2:00 PM', amount: '₹350', status: 'pending' as const, service: 'Imaging', type: 'In-Person' },
+  { id: 'MQ-10289', patient: 'Sunita Patel', test: 'Liver Function Test', sample: 'Blood', time: '3:00 PM', amount: '₹750', status: 'delivered' as const, service: 'Blood', type: 'In-Person' },
+  { id: 'MQ-10290', patient: 'Arjun Mehta', test: 'Urine Culture', sample: 'Urine', time: '4:30 PM', amount: '₹300', status: 'processing' as const, service: 'Urine', type: 'In-Person' },
+  { id: 'MQ-10291', patient: 'Kavya Nair', test: 'CBC', sample: 'Blood', time: '9:00 AM', amount: '₹300 + ₹100', status: 'collected' as const, service: 'Blood', type: 'Home Collection' },
 ]
 
 export function LabOrders() {
@@ -25,11 +25,13 @@ export function LabOrders() {
   const [search, setSearch] = useState('')
   const [activeService, setActiveService] = useState('All')
   const [activeDate, setActiveDate] = useState('Today')
+  const [activeMainSection, setActiveMainSection] = useState<'In-Person' | 'Home Collection'>('In-Person')
 
   const filtered = allOrders.filter(o => {
+    const matchMainSection = o.type === activeMainSection
     const matchService = activeService === 'All' || o.service === activeService
     const matchSearch = !search || o.patient.toLowerCase().includes(search.toLowerCase()) || o.test.toLowerCase().includes(search.toLowerCase()) || o.id.toLowerCase().includes(search.toLowerCase())
-    return matchService && matchSearch
+    return matchMainSection && matchService && matchSearch
   })
 
   return (
@@ -42,6 +44,23 @@ export function LabOrders() {
             <Filter className="w-4 h-4 md:w-5 md:h-5 text-[#667085]" />
           </button>
         </div>
+        
+        {/* Main Sections */}
+        <div className="flex bg-gray-100/80 p-1 rounded-xl mb-4 md:max-w-md">
+          <button 
+            onClick={() => setActiveMainSection('In-Person')}
+            className={cn("flex-1 py-2 text-[13px] font-bold rounded-lg transition-all", activeMainSection === 'In-Person' ? "bg-white text-primary shadow-sm" : "text-[#667085] hover:text-[#172033]")}
+          >
+            In-Person
+          </button>
+          <button 
+            onClick={() => setActiveMainSection('Home Collection')}
+            className={cn("flex-1 py-2 text-[13px] font-bold rounded-lg transition-all", activeMainSection === 'Home Collection' ? "bg-white text-primary shadow-sm" : "text-[#667085] hover:text-[#172033]")}
+          >
+            Home Collection
+          </button>
+        </div>
+
         {/* Search */}
         <div className="relative max-w-xl">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-[#98A2B3]" />

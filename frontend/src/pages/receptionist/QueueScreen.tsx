@@ -3,30 +3,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, ArrowLeft, Mic, CheckCircle2, Search, Filter } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueueStateMachine } from '../../services/useQueueStateMachine';
-import { type QueueStatus } from '../../services/receptionistApi';
 import { cn } from "@/lib/utils"
 
 export function QueueScreen() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'WAITING' | 'IN_CONSULTATION' | 'COMPLETED'>('WAITING');
-  
+
   const deptQuery = searchParams.get('dept');
   const [selectedDept, setSelectedDept] = useState(deptQuery || 'All Depts');
-  
-  const departments = ['All Depts', 'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics'];
+
+  // 'All Depts' is the static default filter; the real department list comes
+  // from the backend (receptionistApi.getDepartments).
+  const departments = ['All Depts'];
 
   const { queue, updateStatus } = useQueueStateMachine(selectedDept === 'All Depts' ? undefined : selectedDept);
 
-  // Fake data if queue is empty because API is not returning real data yet
-  const displayQueue = queue.length > 0 ? queue : [
-    { id: 'q1', token: 'OP-101', patientName: 'Rahul Kumar', doctorName: 'Dr. Sharma', arrivalTime: '10:15 AM', status: 'IN_CONSULTATION' as QueueStatus },
-    { id: 'q2', token: 'OP-102', patientName: 'Priya Patel', doctorName: 'Dr. Sharma', arrivalTime: '10:30 AM', status: 'COMPLETED' as QueueStatus },
-    { id: 'q3', token: 'OP-103', patientName: 'Amit Singh', doctorName: 'Dr. Iyer', arrivalTime: '10:45 AM', status: 'WAITING' as QueueStatus },
-    { id: 'q4', token: 'OP-104', patientName: 'Sneha Reddy', doctorName: 'Dr. Iyer', arrivalTime: '11:00 AM', status: 'WAITING' as QueueStatus },
-  ];
-
-  const filteredQueue = displayQueue.filter(q => {
+  const filteredQueue = queue.filter(q => {
     if (activeTab === 'WAITING') return q.status === 'WAITING' || q.status === 'ARRIVED';
     if (activeTab === 'IN_CONSULTATION') return q.status === 'IN_CONSULTATION' || q.status === 'CALLED';
     if (activeTab === 'COMPLETED') return q.status === 'COMPLETED';

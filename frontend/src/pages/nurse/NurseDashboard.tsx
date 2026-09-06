@@ -1,23 +1,28 @@
 import { motion } from "framer-motion"
-import { MapPin, CheckCircle, Clock, ChevronRight } from "lucide-react"
+import { MapPin, CheckCircle, Clock, ChevronRight, CalendarDays } from "lucide-react"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/EmptyState"
 import { useNavigate } from "react-router-dom"
 
 export function NurseDashboard() {
   const navigate = useNavigate();
 
+  // Counters come from the backend. Unavailable until connected.
   const stats = [
-    { title: "Visits Today", value: "6", color: "text-[#0A1A3D] bg-white border-gray-200" },
-    { title: "Upcoming", value: "2", color: "text-[#1B5DF1] bg-white border-blue-100" },
-    { title: "In Progress", value: "1", color: "text-orange-600 bg-white border-orange-100" },
-    { title: "Completed", value: "3", color: "text-emerald-600 bg-white border-emerald-100" },
+    { title: "Visits Today", value: "—", color: "text-[#0A1A3D] bg-white border-gray-200" },
+    { title: "Upcoming", value: "—", color: "text-[#1B5DF1] bg-white border-blue-100" },
+    { title: "In Progress", value: "—", color: "text-orange-600 bg-white border-orange-100" },
+    { title: "Completed", value: "—", color: "text-emerald-600 bg-white border-emerald-100" },
   ];
 
-  const todayVisits = [
-    { id: 1, name: "Ramesh Kumar", time: "10:30 AM", service: "Post-op Care", status: "Upcoming" },
-    { id: 2, name: "Priya Sharma", time: "12:00 PM", service: "Injection / Dressing", status: "Completed" },
-    { id: 3, name: "Mohammed Ali", time: "02:30 PM", service: "Home Care", status: "Upcoming" },
-  ];
+  // Next assigned visit comes from the backend. Null until connected.
+  const [nextVisit] = useState<{
+    id: number; name: string; time: string; service: string; status: string; distance: string;
+  } | null>(null);
+
+  // Today's visit list comes from the backend. Empty until connected.
+  const todayVisits: { id: number; name: string; time: string; service: string; status: string }[] = [];
 
   return (
     <div className="flex flex-col bg-gray-50/30 min-h-screen pb-[100px]">
@@ -25,7 +30,7 @@ export function NurseDashboard() {
       {/* Header */}
       <div className="pt-8 pb-4 px-4 flex items-center justify-between">
         <div>
-          <p className="text-gray-500 text-[14px] font-medium mb-1">Good Morning, Nurse Jane</p>
+          <p className="text-gray-500 text-[14px] font-medium mb-1">Good Morning</p>
           <h1 className="text-[22px] font-black text-[#0A1A3D] tracking-tight">Home Nursing</h1>
         </div>
       </div>
@@ -60,35 +65,44 @@ export function NurseDashboard() {
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-white/10 blur-2xl"></div>
           
           <div className="relative z-10">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-[13px]">
-                <Clock className="w-4 h-4" /> 10:30 AM
+            {nextVisit ? (
+              <>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-[13px]">
+                    <Clock className="w-4 h-4" /> {nextVisit.time}
+                  </div>
+                  <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-white/20 text-white">
+                    {nextVisit.status}
+                  </span>
+                </div>
+
+                <div className="mb-5">
+                  <h4 className="font-black text-[24px] tracking-tight mb-1">{nextVisit.name}</h4>
+                  <p className="text-blue-100 font-medium flex items-center gap-1.5">
+                    {nextVisit.service}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-[13px] text-blue-100 mb-5 bg-black/10 p-2.5 rounded-xl inline-flex">
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  <span>{nextVisit.distance}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate('/nurse/visits')}
+                    className="flex-1 bg-white text-[#1B5DF1] py-3 rounded-[16px] font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"
+                  >
+                    View Visit
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1 py-2">
+                <h4 className="font-black text-[24px] tracking-tight">—</h4>
+                <p className="text-blue-100 font-medium">No visit scheduled.</p>
               </div>
-              <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg bg-white/20 text-white">
-                Upcoming
-              </span>
-            </div>
-            
-            <div className="mb-5">
-              <h4 className="font-black text-[24px] tracking-tight mb-1">Ramesh Kumar</h4>
-              <p className="text-blue-100 font-medium flex items-center gap-1.5">
-                Post-operative Care
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2 text-[13px] text-blue-100 mb-5 bg-black/10 p-2.5 rounded-xl inline-flex">
-              <MapPin className="w-4 h-4 shrink-0" />
-              <span>2.4 km away</span>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => navigate('/nurse/visits')}
-                className="flex-1 bg-white text-[#1B5DF1] py-3 rounded-[16px] font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"
-              >
-                View Visit
-              </button>
-            </div>
+            )}
           </div>
         </motion.div>
       </div>
@@ -106,7 +120,13 @@ export function NurseDashboard() {
         </div>
         
         <div className="flex flex-col gap-2">
-          {todayVisits.map((visit, i) => (
+          {todayVisits.length === 0 ? (
+            <EmptyState
+              icon={CalendarDays}
+              title="No Visits"
+              description="Today's home nursing visits will appear here once available."
+            />
+          ) : todayVisits.map((visit, i) => (
             <motion.div 
               key={visit.id}
               initial={{ opacity: 0, x: -10 }}

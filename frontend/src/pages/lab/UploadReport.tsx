@@ -3,19 +3,18 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, Search, CheckCircle2, Upload, X, FileText, Image, File, Loader2, Check } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
+import { labApi } from "@/services/labApi"
 import { cn } from "@/lib/utils"
 import { ConditionLabel } from "@/components/shared/ConditionLabel"
-
-const mockOrderSearch = [
-  { id: 'MQ-10284', patient: 'Ramesh Kumar', test: 'CBC + Lipid Profile', date: '14 Aug' },
-  { id: 'MQ-10286', patient: 'Mohammed Ali', test: 'Urine Routine', date: '14 Aug' },
-  { id: 'MQ-10279', patient: 'Meera Pillai', test: 'Thyroid TSH', date: '11 Aug' },
-]
 
 type UploadStep = 1 | 2 | 3 | 'success'
 
 interface SelectedOrder { id: string; patient: string; test: string; date: string }
 interface SelectedFile { name: string; type: string; size: string }
+
+// Searchable orders come from the backend (GET /api/lab/orders?q=…).
+// Empty until connected.
+const searchableOrders: SelectedOrder[] = []
 
 export function UploadReport() {
   const navigate = useNavigate()
@@ -29,7 +28,7 @@ export function UploadReport() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
-  const results = mockOrderSearch.filter(o =>
+  const results = searchableOrders.filter(o =>
     !query || o.patient.toLowerCase().includes(query.toLowerCase()) ||
     o.id.toLowerCase().includes(query.toLowerCase())
   )
@@ -51,15 +50,17 @@ export function UploadReport() {
   }
 
   const handleUpload = async () => {
+    if (!selectedOrder) return
     setIsUploading(true)
     setUploadProgress(0)
-    // Simulate upload progress
-    for (let i = 0; i <= 100; i += 20) {
-      await new Promise(r => setTimeout(r, 200))
-      setUploadProgress(i)
+    try {
+      await labApi.uploadReport(selectedOrder.id, selectedFile)
+      setStep('success')
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to upload report', 'error')
+    } finally {
+      setIsUploading(false)
     }
-    setIsUploading(false)
-    setStep('success')
   }
 
   const FileIcon = ({ type }: { type: string }) => {

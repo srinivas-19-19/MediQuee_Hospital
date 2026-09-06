@@ -5,11 +5,13 @@ import { motion } from "framer-motion"
 export function PermissionsList() {
   const navigate = useNavigate();
 
+  // Role names and access levels are static role definitions.
+  // Active user counts come from the backend and are unavailable until connected.
   const roles = [
-    { name: "Doctor", access: "High", users: 45 },
-    { name: "Nurse", access: "Medium", users: 120 },
-    { name: "Receptionist", access: "Medium", users: 15 },
-    { name: "Laboratory", access: "Medium", users: 8 },
+    { name: "Doctor", access: "High", users: "—" },
+    { name: "Nurse", access: "Medium", users: "—" },
+    { name: "Receptionist", access: "Medium", users: "—" },
+    { name: "Laboratory", access: "Medium", users: "—" },
   ];
 
   return (

@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
 import { ConditionSelector } from "@/components/shared/ConditionSelector"
+import { adminApi } from "@/services/adminApi"
 
 const doctorSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -56,13 +57,16 @@ export function AddDoctor() {
     setStep(s => s - 1);
   }
 
-  const onSubmit = async (_data: DoctorFormValues) => {
+  const onSubmit = async (data: DoctorFormValues) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    toast("Doctor added successfully", "success");
-    navigate(-1);
+    try {
+      await adminApi.createDoctor(data);
+      navigate(-1);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to add doctor', "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const handleBack = () => {

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
+import { adminApi } from "@/services/adminApi"
 
 const nurseSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -54,12 +55,16 @@ export function AddNurse() {
     setStep(s => s - 1);
   }
 
-  const onSubmit = async (_data: NurseFormValues) => {
+  const onSubmit = async (data: NurseFormValues) => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    toast("Nurse added successfully", "success");
-    navigate(-1);
+    try {
+      await adminApi.createNurse(data);
+      navigate(-1);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to add nurse', "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const handleBack = () => {

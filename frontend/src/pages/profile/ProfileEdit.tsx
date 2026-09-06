@@ -6,12 +6,6 @@ import { cn } from "@/lib/utils"
 export function ProfileEdit() {
   const navigate = useNavigate();
   const { role } = useAuth();
-  
-  const roleName = role === 'admin' ? 'Admin User' :
-                   role === 'doctor' ? 'Dr. Sarah Smith' :
-                   role === 'nurse' ? 'Nurse Jane Doe' :
-                   role === 'receptionist' ? 'Alice Brown' :
-                   'Lab Technician';
 
   const isDoctor = role === 'doctor';
   const primaryColor = isDoctor ? "bg-[#1B5DF1] hover:bg-[#1B5DF1]/90" : "bg-[#1A56DB] hover:bg-[#1A56DB]/90";
@@ -42,21 +36,22 @@ export function ProfileEdit() {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-5">
+          {/* Field values come from the backend. Empty until connected. */}
           <h3 className="font-bold text-[#0A1A3D] border-b border-gray-100 pb-2">Basic Information</h3>
-          
+
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">Full Name</label>
-            <input type="text" defaultValue={roleName} className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
+            <input type="text" placeholder="Full name" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">Email Address</label>
-            <input type="email" defaultValue="user@mediquee.com" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
+            <input type="email" placeholder="Email address" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">Phone Number</label>
-            <input type="tel" defaultValue="+91 9876543210" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
+            <input type="tel" placeholder="Phone number" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
           </div>
         </div>
 
@@ -66,27 +61,27 @@ export function ProfileEdit() {
             
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><FileCheck className="w-4 h-4 text-gray-400" /> License Number</label>
-              <input type="text" defaultValue="MCI-12345" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
+              <input type="text" placeholder="Medical council registration number" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Stethoscope className="w-4 h-4 text-gray-400" /> Specialization</label>
-              <input type="text" defaultValue="Cardiology" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
+              <input type="text" placeholder="Specialization" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-gray-400" /> Qualification</label>
-              <input type="text" defaultValue="MBBS, MD (Cardiology)" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
+              <input type="text" placeholder="Qualification" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Clock className="w-4 h-4 text-gray-400" /> Experience (Years)</label>
-              <input type="number" defaultValue="12" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
+              <input type="number" placeholder="Years of experience" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><IndianRupee className="w-4 h-4 text-gray-400" /> Consultation Fee</label>
-              <input type="number" defaultValue="800" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
+              <input type="number" placeholder="Consultation fee" className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#1B5DF1] focus:ring-1 focus:ring-[#1B5DF1]" />
             </div>
           </div>
         )}

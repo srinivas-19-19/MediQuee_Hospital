@@ -1,8 +1,9 @@
-import { ArrowUp, Clock, Users, IndianRupee, Calendar, FileText, ChevronDown, Stethoscope, MoreVertical } from "lucide-react"
+import { Clock, Users, IndianRupee, Calendar, FileText, ChevronDown, Stethoscope, MoreVertical } from "lucide-react"
 import { motion } from "framer-motion"
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts'
 import { useNavigate } from "react-router-dom"
 import { PromoCarousel } from "../components/PromoCarousel"
+import { EmptyState } from "../components/ui/EmptyState"
 
 
 export function Dashboard() {
@@ -20,15 +21,8 @@ export function Dashboard() {
     show: { opacity: 1, y: 0 }
   };
 
-  const revenueData = [
-    { name: 'Mon', revenue: 4000 },
-    { name: 'Tue', revenue: 3000 },
-    { name: 'Wed', revenue: 5000 },
-    { name: 'Thu', revenue: 2780 },
-    { name: 'Fri', revenue: 1890 },
-    { name: 'Sat', revenue: 2390 },
-    { name: 'Sun', revenue: 3490 },
-  ];
+  // Revenue chart data — comes from backend analytics. Empty until connected.
+  const revenueData: { name: string; revenue: number }[] = [];
 
   const quickActions = [
     { icon: Users, label: 'OP Mgt', path: '/appointments' },
@@ -38,11 +32,10 @@ export function Dashboard() {
     { icon: FileText, label: 'Reports', path: '/dashboard' },
   ];
 
-  const todayAppointments = [
-    { time: '09:00 AM', name: 'Ramesh Kumar', dept: 'Cardiology', doctor: 'Dr. Arjun Singh', status: 'Confirmed', statusColor: 'text-[#16A34A]', avatar: 'https://i.pravatar.cc/150?u=1' },
-    { time: '10:00 AM', name: 'Priya Sharma', dept: 'Dermatology', doctor: 'Dr. Neha Verma', status: 'Confirmed', statusColor: 'text-[#16A34A]', avatar: 'https://i.pravatar.cc/150?u=2' },
-    { time: '11:00 AM', name: 'Mohammed Ali', dept: 'General', doctor: 'Dr. Amit Patel', status: 'Pending', statusColor: 'text-[#F59E0B]', avatar: 'https://i.pravatar.cc/150?u=3' },
-  ];
+  // Today's appointments — comes from backend. Empty until connected.
+  const todayAppointments: {
+    time: string; name: string; dept: string; doctor: string; status: string; statusColor: string; avatar: string;
+  }[] = [];
 
   return (
     <motion.div 
@@ -53,7 +46,7 @@ export function Dashboard() {
     >
       {/* Greeting */}
       <div className="flex flex-col gap-1">
-        <h1 className="text-[22px] font-semibold text-[#172033]">Good morning, City Care Hospital 👋</h1>
+        <h1 className="text-[22px] font-semibold text-[#172033]">Good morning 👋</h1>
         <p className="text-[14px] text-[#667085]">Here's what's happening at your hospital today.</p>
       </div>
 
@@ -68,11 +61,7 @@ export function Dashboard() {
             <span className="text-[13px] font-medium text-[#667085]">Total OPs</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">128</span>
-            <div className="flex items-center text-[11px] font-semibold text-success mt-1">
-              <ArrowUp className="w-3 h-3 mr-0.5" />
-              12% today
-            </div>
+            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">—</span>
           </div>
         </motion.div>
 
@@ -85,11 +74,7 @@ export function Dashboard() {
             <span className="text-[13px] font-medium text-[#667085]">Pending OPs</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">18</span>
-            <div className="flex items-center text-[11px] font-semibold text-warning mt-1">
-              <ArrowUp className="w-3 h-3 mr-0.5" />
-              8% today
-            </div>
+            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">—</span>
           </div>
         </motion.div>
 
@@ -102,11 +87,7 @@ export function Dashboard() {
             <span className="text-[13px] font-medium text-[#667085]">Lab Tests</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">86</span>
-            <div className="flex items-center text-[11px] font-semibold text-success mt-1">
-              <ArrowUp className="w-3 h-3 mr-0.5" />
-              10% today
-            </div>
+            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">—</span>
           </div>
         </motion.div>
 
@@ -119,11 +100,7 @@ export function Dashboard() {
             <span className="text-[13px] font-medium text-[#667085]">Revenue</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">₹2,45k</span>
-            <div className="flex items-center text-[11px] font-semibold text-success mt-1">
-              <ArrowUp className="w-3 h-3 mr-0.5" />
-              15% today
-            </div>
+            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">—</span>
           </div>
         </motion.div>
       </div>
@@ -144,31 +121,33 @@ export function Dashboard() {
         
         <div className="flex items-end justify-between">
           <div className="flex flex-col">
-            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">₹2,45,000</span>
-            <div className="flex items-center text-[12px] font-semibold text-success mt-1">
-              <ArrowUp className="w-3 h-3 mr-0.5" />
-              15% vs previous period
-            </div>
+            <span className="text-[24px] font-semibold text-[#172033] tracking-tight">—</span>
           </div>
         </div>
 
         <div className="h-[120px] w-full mt-2 -ml-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData}>
-              <defs>
-                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1769E0" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#1769E0" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '12px' }}
-                itemStyle={{ color: '#1769E0', fontWeight: '600' }}
-                cursor={{ stroke: '#E5E7EB', strokeWidth: 1, strokeDasharray: '4 4' }}
-              />
-              <Area type="monotone" dataKey="revenue" stroke="#1769E0" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
-            </AreaChart>
-          </ResponsiveContainer>
+          {revenueData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueData}>
+                <defs>
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1769E0" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#1769E0" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '12px' }}
+                  itemStyle={{ color: '#1769E0', fontWeight: '600' }}
+                  cursor={{ stroke: '#E5E7EB', strokeWidth: 1, strokeDasharray: '4 4' }}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#1769E0" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full w-full flex items-center justify-center ml-2">
+              <span className="text-[13px] font-medium text-[#98A2B3]">Revenue data unavailable</span>
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -195,17 +174,17 @@ export function Dashboard() {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100/50 shadow-[0_1px_2px_rgba(0,0,0,0.02)] overflow-hidden">
-          {todayAppointments.map((appt, idx) => (
+          {todayAppointments.length > 0 ? todayAppointments.map((appt, idx) => (
             <div key={idx} onClick={() => navigate('/appointments')} className="flex items-start gap-3 p-4 border-b border-gray-50 last:border-0 interactive-element active:bg-gray-50/50 transition-colors cursor-pointer">
               <div className="flex flex-col items-center pt-1 min-w-[60px]">
                 <span className="text-[13px] font-bold text-[#172033]">{appt.time.split(' ')[0]}</span>
                 <span className="text-[10px] font-semibold text-[#98A2B3]">{appt.time.split(' ')[1]}</span>
               </div>
-              
+
               <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden shrink-0">
                 <img src={appt.avatar} alt={appt.name} className="w-full h-full object-cover" />
               </div>
-              
+
               <div className="flex flex-col flex-1">
                 <div className="flex justify-between items-start">
                   <span className="text-[15px] font-semibold text-[#172033]">{appt.name}</span>
@@ -217,7 +196,13 @@ export function Dashboard() {
                 <span className={`text-[12px] font-semibold mt-1.5 ${appt.statusColor}`}>{appt.status}</span>
               </div>
             </div>
-          ))}
+          )) : (
+            <EmptyState
+              icon={Calendar}
+              title="No Appointments"
+              description="Today's appointments will appear here once available."
+            />
+          )}
         </div>
       </motion.div>
       

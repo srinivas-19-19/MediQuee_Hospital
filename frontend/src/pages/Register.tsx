@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { onboardingSchema, type OnboardingFormValues } from "./onboarding/schema";
 import { OnboardingLayout } from "./onboarding/OnboardingLayout";
 import { SuccessScreen } from "./onboarding/SuccessScreen";
+import { authApi } from "@/services/authApi";
+import { useToast } from "@/context/ToastContext";
 
 // Shared Steps
 import { Step1Account } from "./onboarding/steps/shared/Step1Account";
@@ -40,6 +42,7 @@ const getInitialValues = () => {
 export function Register() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
+  const { toast } = useToast();
 
   // Initialize form with local storage draft if available
   const methods = useForm<OnboardingFormValues>({
@@ -120,12 +123,16 @@ export function Register() {
   };
 
   const onSubmit = async (data: OnboardingFormValues) => {
-    console.log("Form Submitted:", data);
-    // Clear draft
-    localStorage.removeItem(DRAFT_KEY);
-    
-    // Registration submitted. User must await admin verification before login.
-    setIsSuccess(true);
+    try {
+      await authApi.register(data);
+      // Clear draft only once the backend has accepted the registration.
+      localStorage.removeItem(DRAFT_KEY);
+
+      // Registration submitted. User must await admin verification before login.
+      setIsSuccess(true);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to submit registration', 'error');
+    }
   };
 
   if (isSuccess) {

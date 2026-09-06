@@ -1,12 +1,16 @@
-import { ArrowLeft, Plus } from "lucide-react"
+import { ArrowLeft, Plus, Users } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import { motion } from "framer-motion"
+import { EmptyState } from "@/components/ui/EmptyState"
 
 export function StaffList() {
   const navigate = useNavigate();
   const { type } = useParams();
-  
+
   const title = type ? type.charAt(0).toUpperCase() + type.slice(1) : "Staff List";
+
+  // Staff records come from the backend. Empty until connected.
+  const staff: { id: string; name: string; designation: string; avatar?: string }[] = [];
 
   return (
     <div className="flex flex-col bg-gray-50 min-h-[calc(100vh-80px)]">
@@ -24,14 +28,23 @@ export function StaffList() {
 
       <div className="p-4 flex flex-col gap-4">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
-          {[1, 2, 3].map((_, i) => (
-            <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+          {staff.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No Staff"
+              description="Staff members will appear here once available."
+            />
+          ) : staff.map((member) => (
+            <div key={member.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-                <img src={`https://i.pravatar.cc/150?u=${i + 10}`} alt="avatar" className="w-full h-full object-cover" />
+                {member.avatar
+                  ? <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                  : <Users className="w-5 h-5 text-gray-400" />
+                }
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-gray-900">User Name {i + 1}</span>
-                <span className="text-xs text-gray-500">{title.slice(0, -1)}</span>
+                <span className="font-bold text-gray-900">{member.name}</span>
+                <span className="text-xs text-gray-500">{member.designation}</span>
               </div>
             </div>
           ))}

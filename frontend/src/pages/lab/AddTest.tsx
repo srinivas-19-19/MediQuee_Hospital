@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useToast } from "@/context/ToastContext"
+import { labApi } from "@/services/labApi"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
 import { cn } from "@/lib/utils"
 import { ConditionSelector } from "@/components/shared/ConditionSelector"
@@ -43,12 +44,17 @@ export function AddTest() {
   
   const selectedName = watch("name");
 
-  const onSubmit = async (_data: TestFormValues) => {
+  const onSubmit = async (data: TestFormValues) => {
     setIsSubmitting(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setIsSubmitting(false)
-    toast("Test added successfully", "success")
-    navigate(-1)
+    try {
+      await labApi.createTest(data)
+      toast("Test added successfully", "success")
+      navigate(-1)
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to add test', "error")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleBack = () => isDirty ? setShowExitConfirm(true) : navigate(-1)

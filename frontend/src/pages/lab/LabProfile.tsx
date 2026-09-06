@@ -43,9 +43,10 @@ export function LabProfile() {
             <FlaskConical className="w-10 h-10 md:w-14 md:h-14 text-white" strokeWidth={1.5} />
           </div>
           <div className="text-center">
-            <p className="text-[18px] md:text-[22px] font-bold text-[#172033]">City Care Diagnostics</p>
+            {/* Lab name and contact email come from the backend. Unavailable until connected. */}
+            <p className="text-[18px] md:text-[22px] font-bold text-[#172033]">—</p>
             <p className="text-[14px] md:text-[16px] text-[#667085]">Lab Owner</p>
-            <p className="text-[13px] md:text-[15px] text-[#98A2B3] mt-0.5 md:mt-1">admin@citycarediag.com</p>
+            <p className="text-[13px] md:text-[15px] text-[#98A2B3] mt-0.5 md:mt-1">—</p>
           </div>
         </motion.div>
 

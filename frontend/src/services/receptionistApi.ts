@@ -97,28 +97,22 @@ export const receptionistApi = {
   /**
    * GET /api/departments
    * Retrieves all hospital departments.
+   * Returns empty array until backend is connected (no fake departments).
    */
   async getDepartments(): Promise<{ id: string; name: string }[]> {
     console.log('[API Call] GET /api/departments');
-    return [
-      { id: 'dept-1', name: 'General Medicine' },
-      { id: 'dept-2', name: 'Cardiology' },
-      { id: 'dept-3', name: 'Orthopedics' },
-      { id: 'dept-4', name: 'Pediatrics' },
-    ];
+    // BACKEND_MISSING: implement GET /api/departments to return real departments.
+    return [];
   },
 
   /**
    * GET /api/doctors?departmentId=
    * Retrieves doctors, optionally filtered by department.
+   * Returns empty array until backend is connected (no fake doctors).
    */
   async getDoctors(departmentId?: string): Promise<{ id: string; name: string; departmentId: string }[]> {
     console.log('[API Call] GET /api/doctors', { departmentId });
-    return [
-      { id: 'doc-1', name: 'Dr. Sharma', departmentId: 'dept-1' },
-      { id: 'doc-2', name: 'Dr. Verma', departmentId: 'dept-3' },
-      { id: 'doc-3', name: 'Dr. Singh', departmentId: 'dept-4' },
-      { id: 'doc-4', name: 'Dr. Iyer', departmentId: 'dept-2' },
-    ];
+    // BACKEND_MISSING: implement GET /api/doctors to return real doctors.
+    return [];
   }
 };

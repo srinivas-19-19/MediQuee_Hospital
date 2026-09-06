@@ -1,5 +1,5 @@
 import { Search, Filter, Calendar, ArrowLeft, Play, FileText } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppointmentDetailModal } from "../../components/appointments/AppointmentDetailModal"
@@ -11,9 +11,9 @@ import { useNavigate } from "react-router-dom"
 export function DoctorOPs() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState('opd');
-  const [selectedDate, setSelectedDate] = useState('14 May');
+  const [selectedDate, setSelectedDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
 
   const { role } = useAuth();
@@ -26,38 +26,20 @@ export function DoctorOPs() {
     { id: 'all', label: 'All' },
   ];
 
-  const dates = [
-    { date: '12 May', day: 'Mon' },
-    { date: '13 May', day: 'Tue' },
-    { date: '14 May', day: 'Wed' },
-    { date: '15 May', day: 'Thu' },
-    { date: '16 May', day: 'Fri' },
-  ];
+  // Date strip — populated from backend / calendar selection. Empty until connected.
+  const dates: { date: string; day: string }[] = [];
 
-  const initialAppointments = [
-    { id: 1, mqId: "1001", patientName: "Rahul Sharma", time: "09:00", period: "AM", type: "Follow Up", doctor: "Dr. Jane Smith", status: "PENDING", avatar: "R" },
-    { id: 2, mqId: "1002", patientName: "Priya Singh", time: "09:30", period: "AM", type: "New Patient", doctor: "Dr. Jane Smith", status: "CONFIRMED", avatar: "P" },
-    { id: 3, mqId: "1003", patientName: "Amit Kumar", time: "10:00", period: "AM", type: "Report Review", doctor: "Dr. Jane Smith", status: "PENDING", avatar: "A" },
-    { id: 4, mqId: "1004", patientName: "Sunita Devi", time: "10:30", period: "AM", type: "Follow Up", doctor: "Dr. Jane Smith", status: "CANCELLED", avatar: "S" },
-    { id: 5, mqId: "1005", patientName: "Vikram Patel", time: "11:00", period: "AM", type: "Follow Up", doctor: "Dr. Jane Smith", status: "WAITING", avatar: "V" },
-  ];
+  // OP appointment records come from the backend. Empty until connected.
+  type DoctorAppointment = {
+    id: number; mqId: string; patientName: string; time: string; period: string;
+    type: string; doctor: string; status: string; avatar: string;
+  };
+  const [appointmentsList, setAppointmentsList] = useState<DoctorAppointment[]>([]);
 
-  const [appointmentsList, setAppointmentsList] = useState(initialAppointments);
-
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, [selectedFilter, selectedDate]);
-
-  let filteredAppointments = appointmentsList.filter(apt => 
+  const filteredAppointments = appointmentsList.filter(apt =>
     (apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     apt.mqId.includes(searchQuery))
   );
-
-  if (role === 'doctor') {
-    filteredAppointments = filteredAppointments.filter(apt => apt.doctor === "Dr. Jane Smith");
-  }
 
   const updateStatus = (id: number, newStatus: string) => {
     setAppointmentsList(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
@@ -87,7 +69,7 @@ export function DoctorOPs() {
           </button>
           <div className="flex flex-col">
             <h1 className="text-[22px] font-black text-[#0A1A3D] tracking-tight">OP Consultations</h1>
-            <span className="text-[13px] font-bold text-gray-500">Today, 14 May</span>
+            <span className="text-[13px] font-bold text-gray-500">Today</span>
           </div>
         </div>
 
@@ -160,28 +142,28 @@ export function DoctorOPs() {
         {/* Summary Block */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[15px] font-bold text-[#0A1A3D]">Today, 14 May 2025</h3>
+            <h3 className="text-[15px] font-bold text-[#0A1A3D]">Today</h3>
             <button className="text-[#1B5DF1] text-[13px] font-bold">Summary</button>
           </div>
-          
+
           <div className="bg-white rounded-[20px] p-4 flex items-center justify-between border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">24</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
               <span className="text-[11px] font-bold text-gray-500">Total</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">12</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
               <span className="text-[11px] font-bold text-gray-500">Pending</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">8</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
               <span className="text-[11px] font-bold text-gray-500">In Progress</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">18</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
               <span className="text-[11px] font-bold text-gray-500">Completed</span>
             </div>
           </div>

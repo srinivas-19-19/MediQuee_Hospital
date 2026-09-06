@@ -1,16 +1,18 @@
 import { useState } from "react"
-import { Calendar as MapPin, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar as MapPin, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { motion } from "framer-motion"
+import { EmptyState } from "@/components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 
 export function NurseCalendar() {
-  const [_setCurrentDate] = useState(new Date('2026-05-14'));
   const [view, setView] = useState<'day' | 'week'>('day');
+  const [currentDate] = useState(() => new Date());
 
-  const upcomingVisits = [
-    { id: 1, name: "Sneha Patel", time: "11:00 AM", service: "Post-op Care", address: "123 Park Street, City", status: "Upcoming", color: "bg-blue-50 border-blue-200 text-blue-700" },
-    { id: 2, name: "Arun Verma", time: "02:00 PM", service: "Wound Dressing", address: "45 Lake View Apts", status: "Upcoming", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
-  ];
+  // Scheduled visits come from the backend. Empty until connected.
+  const upcomingVisits: {
+    id: number; name: string; time: string; service: string;
+    address: string; status: string; color: string;
+  }[] = [];
 
   return (
     <div className="flex flex-col bg-gray-50/30 min-h-screen pb-[120px]">
@@ -37,7 +39,7 @@ export function NurseCalendar() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <span className="font-bold text-[16px] text-[#172033]">
-            14 May 2026
+            {currentDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
           </span>
           <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-[#172033]">
             <ChevronRight className="w-5 h-5" />
@@ -46,24 +48,30 @@ export function NurseCalendar() {
       </div>
 
       <div className="flex flex-col px-4 pt-5 gap-4">
-        {upcomingVisits.map((visit) => (
-          <motion.div 
+        {upcomingVisits.length === 0 ? (
+          <EmptyState
+            icon={CalendarDays}
+            title="No Visits Scheduled"
+            description="Scheduled home visits will appear here once available."
+          />
+        ) : upcomingVisits.map((visit) => (
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            key={visit.id} 
+            key={visit.id}
             className="flex gap-4"
           >
             <div className="flex flex-col items-center min-w-[60px] pt-1">
               <span className="text-[15px] font-black text-[#172033] leading-none">{visit.time.split(' ')[0]}</span>
               <span className="text-[12px] font-bold text-[#98A2B3] mt-1">{visit.time.split(' ')[1]}</span>
             </div>
-            
+
             <div className={cn("flex-1 flex flex-col p-4 rounded-2xl border shadow-sm", visit.color)}>
               <div className="flex justify-between items-start mb-1">
                 <h4 className="font-bold text-[16px]">{visit.name}</h4>
               </div>
               <p className="text-[14px] font-medium opacity-90 mb-3">{visit.service}</p>
-              
+
               <div className="flex items-start gap-1.5 text-[12px] font-medium opacity-80">
                 <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                 <span>{visit.address}</span>
@@ -71,17 +79,6 @@ export function NurseCalendar() {
             </div>
           </motion.div>
         ))}
-
-        {/* Empty slots to show it's a calendar */}
-        <div className="flex gap-4 mt-2">
-          <div className="flex flex-col items-center min-w-[60px] pt-1">
-            <span className="text-[15px] font-black text-[#98A2B3] leading-none opacity-50">04:00</span>
-            <span className="text-[12px] font-bold text-[#98A2B3] mt-1 opacity-50">PM</span>
-          </div>
-          <div className="flex-1 flex flex-col p-4 rounded-2xl border border-dashed border-gray-200">
-            <span className="text-[14px] font-medium text-gray-400 text-center py-2">No visits scheduled</span>
-          </div>
-        </div>
       </div>
     </div>
   )

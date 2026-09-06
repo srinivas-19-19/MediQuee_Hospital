@@ -4,35 +4,29 @@ import { ClipboardList, TestTube, FileText, IndianRupee, ChevronRight, User } fr
 import { useNavigate } from "react-router-dom"
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from "recharts"
 import { LabKpiCard, StatusBadge } from "@/components/lab/LabUI"
+import { EmptyState } from "@/components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 import { ConditionLabel } from "@/components/shared/ConditionLabel"
 
-const revenueData = {
-  today: [
-    { t: '8am', v: 2200 }, { t: '10am', v: 4500 }, { t: '12pm', v: 6800 },
-    { t: '2pm', v: 9100 }, { t: '4pm', v: 12400 }, { t: '6pm', v: 15800 }, { t: 'Now', v: 24500 },
-  ],
-  week: [
-    { t: 'Mon', v: 18000 }, { t: 'Tue', v: 22500 }, { t: 'Wed', v: 19000 },
-    { t: 'Thu', v: 28000 }, { t: 'Fri', v: 31000 }, { t: 'Sat', v: 24500 },
-  ],
-  month: [
-    { t: 'W1', v: 95000 }, { t: 'W2', v: 112000 }, { t: 'W3', v: 88000 }, { t: 'W4', v: 142000 },
-  ],
+// Revenue series come from the backend analytics endpoint. Empty until connected.
+const revenueData: Record<'today' | 'week' | 'month', { t: string; v: number }[]> = {
+  today: [],
+  week: [],
+  month: [],
 }
 
-const todayOrders = [
-  { id: 'MQ-10284', patient: 'Ramesh Kumar', test: 'CBC + Lipid Profile', sample: 'Blood', time: '10:30 AM', status: 'processing' as const },
-  { id: 'MQ-10285', patient: 'Priya Sharma', test: 'Thyroid Profile', sample: 'Blood', time: '11:15 AM', status: 'ready' as const },
-  { id: 'MQ-10286', patient: 'Mohammed Ali', test: 'Urine Routine', sample: 'Urine', time: '12:00 PM', status: 'pending' as const },
-  { id: 'MQ-10287', patient: 'Lakshmi Devi', test: 'Blood Sugar (HbA1c)', sample: 'Blood', time: '1:30 PM', status: 'collected' as const },
-]
+// Lab orders come from the backend. Empty until connected.
+const todayOrders: {
+  id: string; patient: string; test: string; sample: string; time: string;
+  status: 'pending' | 'collected' | 'processing' | 'ready' | 'delivered' | 'cancelled';
+}[] = []
 
-const testStatus = [
-  { label: 'Pending', count: 18, color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { label: 'Collected', count: 24, color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { label: 'Processing', count: 32, color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { label: 'Ready', count: 12, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+// Labels and colors are static UI config; counts come from the backend.
+const testStatus: { label: string; count: string; color: string }[] = [
+  { label: 'Pending', count: '—', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { label: 'Collected', count: '—', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { label: 'Processing', count: '—', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { label: 'Ready', count: '—', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
 ]
 
 function getGreeting() {
@@ -51,16 +45,16 @@ export function LabDashboard() {
 
       {/* Greeting */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <p className="text-[22px] md:text-[28px] font-bold text-[#172033]">{getGreeting()}, MediQuee Lab 👋</p>
+        <p className="text-[22px] md:text-[28px] font-bold text-[#172033]">{getGreeting()} 👋</p>
         <p className="text-[14px] md:text-[16px] text-[#667085] mt-0.5 md:mt-1">Here's what's happening at your lab today.</p>
       </motion.div>
 
       {/* KPI Grid */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <LabKpiCard icon={ClipboardList} label="Total Orders" value="128" trend="↑ 12%" iconBg="bg-blue-50" iconColor="text-primary" />
-        <LabKpiCard icon={TestTube} label="Pending Tests" value="18" trend="↑ 8%" iconBg="bg-amber-50" iconColor="text-amber-600" />
-        <LabKpiCard icon={FileText} label="Reports Ready" value="86" trend="↑ 10%" iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-        <LabKpiCard icon={IndianRupee} label="Today's Revenue" value="₹24,500" trend="↑ 15%" iconBg="bg-purple-50" iconColor="text-purple-600" />
+        <LabKpiCard icon={ClipboardList} label="Total Orders" value="—" iconBg="bg-blue-50" iconColor="text-primary" />
+        <LabKpiCard icon={TestTube} label="Pending Tests" value="—" iconBg="bg-amber-50" iconColor="text-amber-600" />
+        <LabKpiCard icon={FileText} label="Reports Ready" value="—" iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+        <LabKpiCard icon={IndianRupee} label="Today's Revenue" value="—" iconBg="bg-purple-50" iconColor="text-purple-600" />
       </motion.div>
 
       {/* Test Status */}
@@ -85,8 +79,7 @@ export function LabDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
             <div>
               <p className="text-[13px] md:text-[14px] text-[#667085] font-medium">Revenue</p>
-              <p className="text-[24px] md:text-[32px] font-bold text-[#172033]">₹24,500</p>
-              <p className="text-[12px] md:text-[13px] text-emerald-600 font-semibold mt-0.5">↑ 15% vs previous period</p>
+              <p className="text-[24px] md:text-[32px] font-bold text-[#172033]">—</p>
             </div>
             <div className="flex bg-[#F7F8FA] rounded-xl p-1 gap-1 shrink-0 self-start">
               {(['today', 'week', 'month'] as const).map(p => (
@@ -104,22 +97,28 @@ export function LabDashboard() {
             </div>
           </div>
           <div className="h-[90px] md:h-[200px] mt-auto">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData[revPeriod]} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-                <defs>
-                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1769E0" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#1769E0" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Tooltip
-                  contentStyle={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 12 }}
-                  formatter={(v: any) => [`₹${v.toLocaleString()}`, 'Revenue']}
-                  labelStyle={{ color: '#667085' }}
-                />
-                <Area type="monotone" dataKey="v" stroke="#1769E0" strokeWidth={2} fill="url(#revGrad)" dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {revenueData[revPeriod].length === 0 ? (
+              <div className="w-full h-full flex items-center justify-center text-[13px] font-medium text-[#98A2B3]">
+                Revenue data unavailable
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData[revPeriod]} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                  <defs>
+                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#1769E0" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#1769E0" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 12 }}
+                    formatter={(v: any) => [`₹${v.toLocaleString()}`, 'Revenue']}
+                    labelStyle={{ color: '#667085' }}
+                  />
+                  <Area type="monotone" dataKey="v" stroke="#1769E0" strokeWidth={2} fill="url(#revGrad)" dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </motion.div>
 
@@ -133,7 +132,13 @@ export function LabDashboard() {
           </div>
 
           <div className="flex flex-col gap-2 md:gap-3 flex-1 overflow-y-auto">
-            {todayOrders.map((order, i) => (
+            {todayOrders.length === 0 ? (
+              <EmptyState
+                icon={ClipboardList}
+                title="No Orders"
+                description="Today's lab orders will appear here once available."
+              />
+            ) : todayOrders.map((order, i) => (
               <motion.button
                 key={order.id}
                 initial={{ opacity: 0, y: 6 }}

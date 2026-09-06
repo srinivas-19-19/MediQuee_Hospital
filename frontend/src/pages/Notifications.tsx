@@ -1,42 +1,15 @@
 import { Bell, BellOff, ArrowRight, ArrowLeft, Calendar, AlertCircle, Video, Home, Activity, CheckCircle, FileText } from "lucide-react"
 import { useState } from "react"
-import { useAuth } from "@/context/AuthContext"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import { EmptyState } from "../components/ui/EmptyState"
 
 export function Notifications() {
   const [enabled, setEnabled] = useState(true);
-  const { role } = useAuth();
   const navigate = useNavigate();
 
-  let notifications: any[] = [];
-
-  if (role === 'admin') {
-    notifications = [
-      { title: "New Appointment", desc: "Rahul Sharma booked an OP consultation.", time: "2h ago", type: "appointment" },
-      { title: "Hospital Alert", desc: "System updated successfully.", time: "1d ago", type: "alert" },
-    ];
-  } else if (role === 'doctor') {
-    notifications = [
-      { title: "Patient Arrived", desc: "Priya Sharma is waiting for OP.", time: "10m ago", type: "appointment" },
-      { title: "Video Consultation", desc: "Reminder: Call with Amit starts in 15 mins.", time: "15m ago", type: "video" },
-    ];
-  } else if (role === 'nurse') {
-    notifications = [
-      { title: "New Booking", desc: "Home nursing request at MG Road.", time: "1h ago", type: "home" },
-      { title: "Visit Reminder", desc: "Next visit for Post-op Care in 30 mins.", time: "30m ago", type: "activity" },
-    ];
-  } else if (role === 'receptionist') {
-    notifications = [
-      { title: "High Rush Alert", desc: "Cardiology department queue is above normal.", time: "5m ago", type: "alert" },
-      { title: "New OP Registration", desc: "Token OP-104 generated.", time: "20m ago", type: "success" },
-    ];
-  } else if (role === 'lab') {
-    notifications = [
-      { title: "New Test Order", desc: "Complete Blood Count for Ramesh.", time: "30m ago", type: "document" },
-      { title: "Sample Pending", desc: "Home collection scheduled at 10:00 AM.", time: "2h ago", type: "activity" },
-    ];
-  }
+  // Notifications come from the backend (role-scoped). Empty until connected.
+  const notifications: { title: string; desc: string; time: string; type: string; read?: boolean }[] = [];
 
   const getIconForType = (type: string) => {
     switch (type) {
@@ -108,7 +81,13 @@ export function Notifications() {
         <div className="flex flex-col gap-3">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-1">Recent</h2>
           <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-3">
-            {notifications.map((notif, i) => (
+            {notifications.length === 0 ? (
+              <EmptyState
+                icon={Bell}
+                title="No Notifications"
+                description="Alerts and reminders will appear here once available."
+              />
+            ) : notifications.map((notif, i) => (
               <motion.div 
                 key={i} 
                 variants={item}

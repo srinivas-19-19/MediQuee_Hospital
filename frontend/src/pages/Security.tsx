@@ -40,8 +40,8 @@ export function Security() {
                   <span className="text-xs text-gray-500 dark:text-gray-400">Add an extra layer of security</span>
                 </div>
               </div>
-              <div className="px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold rounded-lg border border-green-200 dark:border-green-800">
-                Enabled
+              <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs font-bold rounded-lg border border-gray-200 dark:border-gray-700">
+                —
               </div>
             </div>
 

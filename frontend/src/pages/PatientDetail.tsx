@@ -3,35 +3,42 @@ import { useNavigate, useParams } from "react-router-dom"
 import { motion } from "framer-motion"
 import { useState } from "react"
 import { ConditionLabel } from "@/components/shared/ConditionLabel"
+import { EmptyState } from "../components/ui/EmptyState"
 
 export function PatientDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'reports'>('overview');
 
-  // Mock patient data
-  const patient = {
-    id: id || "1",
-    name: "Rahul Sharma",
-    age: "45 Y",
-    gender: "Male",
-    phone: "+91 98765 43210",
-    bloodGroup: "O+",
-    weight: "72 kg",
-    height: "175 cm",
-    allergies: "None",
-    lastVisit: "12 May 2025"
+  // Patient record comes from the backend (GET /api/patients/:id). Null until connected.
+  type PatientRecord = {
+    id: string; name: string; age: string; gender: string; phone: string;
+    bloodGroup: string; weight: string; height: string; allergies: string; lastVisit: string;
   };
+  const [patient] = useState<PatientRecord | null>(null);
 
-  const visits = [
-    { date: "12 May 2025", doctor: "Dr. Smith", diagnosis: "Viral Fever", status: "Completed" },
-    { date: "20 Apr 2025", doctor: "Dr. Smith", diagnosis: "Routine Checkup", status: "Completed" },
-  ];
+  // Visit history & reports come from the backend. Empty until connected.
+  const visits: { date: string; doctor: string; diagnosis: string; status: string }[] = [];
+  const reports: { name: string; date: string; type: string; size: string }[] = [];
 
-  const reports = [
-    { name: "Complete Blood Count", date: "12 May 2025", type: "PDF", size: "1.2 MB" },
-    { name: "Chest X-Ray", date: "20 Apr 2025", type: "IMAGE", size: "4.5 MB" },
-  ];
+  if (!patient) {
+    return (
+      <div className="flex flex-col bg-gray-50 min-h-[calc(100vh-80px)]">
+        <div className="bg-white px-4 pt-4 pb-4 shadow-sm">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-800 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon={User}
+            title="Patient Unavailable"
+            description={`Details for patient #${id} will appear here once available.`}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col bg-gray-50 min-h-[calc(100vh-80px)] pb-20">
@@ -114,8 +121,7 @@ export function PatientDetail() {
                 <Activity className="w-5 h-5 text-primary" /> Vitals Summary
               </h3>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Patient is generally healthy. Blood pressure is normal (120/80). 
-                Heart rate is steady at 72 bpm. 
+                Vitals summary will appear here once available.
               </p>
             </div>
             
@@ -124,7 +130,9 @@ export function PatientDetail() {
 
         {activeTab === 'history' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
-            {visits.map((visit, i) => (
+            {visits.length === 0 ? (
+              <EmptyState icon={Clock} title="No Visit History" description="Past visits will appear here once available." />
+            ) : visits.map((visit, i) => (
               <div key={i} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4">
                 <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
                   <Clock className="w-5 h-5" />
@@ -146,7 +154,9 @@ export function PatientDetail() {
 
         {activeTab === 'reports' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
-            {reports.map((report, i) => (
+            {reports.length === 0 ? (
+              <EmptyState icon={FileCheck} title="No Reports" description="Lab reports will appear here once available." />
+            ) : reports.map((report, i) => (
               <div key={i} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
                   <FileCheck className="w-6 h-6" />

@@ -2,16 +2,13 @@ import { ArrowLeft, History, Calendar as CalendarIcon, Search } from "lucide-rea
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/EmptyState"
 
 export function ConsultationHistory() {
   const navigate = useNavigate();
 
-  const history = [
-    { id: 1, date: "12 May 2025", time: "09:30 AM", patient: "Rahul Sharma", type: "Follow Up", status: "Completed" },
-    { id: 2, date: "12 May 2025", time: "10:15 AM", patient: "Priya Singh", type: "New Patient", status: "Completed" },
-    { id: 3, date: "11 May 2025", time: "02:00 PM", patient: "Amit Kumar", type: "Video Consult", status: "Completed" },
-    { id: 4, date: "10 May 2025", time: "11:30 AM", patient: "Sunita Devi", type: "Follow Up", status: "Cancelled" },
-  ];
+  // Consultation records come from the backend. Empty until connected.
+  const history: { id: number; date: string; time: string; patient: string; type: string; status: string }[] = [];
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50/30 pb-12">
@@ -43,7 +40,13 @@ export function ConsultationHistory() {
           </button>
         </div>
 
-        {history.map((item, i) => (
+        {history.length === 0 ? (
+          <EmptyState
+            icon={History}
+            title="No Consultations"
+            description="Past consultations will appear here once available."
+          />
+        ) : history.map((item, i) => (
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }} 

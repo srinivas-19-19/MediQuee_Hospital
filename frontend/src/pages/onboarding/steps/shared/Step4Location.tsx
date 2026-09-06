@@ -1,9 +1,11 @@
 import { useFormContext } from "react-hook-form";
 import { MapPin, Navigation } from "lucide-react";
 import type { OnboardingFormValues } from "../../schema";
+import { useToast } from "@/context/ToastContext";
 
 export function Step4Location() {
   const { register, watch, formState: { errors } } = useFormContext<OnboardingFormValues>();
+  const { toast } = useToast();
   const isHospital = watch("businessType.businessType") === "hospital";
   const entityType = isHospital ? "hospital" : "laboratory";
   const fieldPrefix = isHospital ? "hospitalLocation" : "labLocation";
@@ -11,8 +13,9 @@ export function Step4Location() {
   const entityErrors = isHospital ? errors.hospitalLocation : errors.labLocation;
 
   const handleUseLocation = () => {
-    // In a real app, this would use geolocation API and geocoding to fill the fields
-    alert("Location access requested. (Mock implementation)");
+    // Resolving coordinates into an address requires a backend reverse-geocoding
+    // endpoint, which is not available yet.
+    toast("Automatic location fill is unavailable. Please enter the address manually.", "warning");
   };
 
   return (

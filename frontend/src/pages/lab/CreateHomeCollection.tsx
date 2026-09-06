@@ -2,6 +2,7 @@ import { useState } from "react"
 import { ArrowLeft, Loader2, Home } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
+import { labApi } from "@/services/labApi"
 import { cn } from "@/lib/utils"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -37,12 +38,17 @@ export function CreateHomeCollection() {
   
   const selectedTest = watch("test");
 
-  const onSubmit = async (_: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setIsSubmitting(false)
-    toast("Home collection scheduled", "success")
-    navigate(-1)
+    try {
+      await labApi.createHomeCollection(data)
+      toast("Home collection scheduled", "success")
+      navigate(-1)
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to schedule collection', "error")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleBack = () => isDirty ? setShowExitConfirm(true) : navigate(-1)

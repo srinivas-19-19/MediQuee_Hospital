@@ -1,16 +1,13 @@
 import { ArrowLeft, Plus, LayoutGrid } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
+import { EmptyState } from "@/components/ui/EmptyState"
 
 export function DepartmentsList() {
   const navigate = useNavigate();
 
-  const departments = [
-    { name: "Cardiology", head: "Dr. Sharma", count: 12 },
-    { name: "Neurology", head: "Dr. Iyer", count: 8 },
-    { name: "Pediatrics", head: "Dr. Singh", count: 15 },
-    { name: "Orthopedics", head: "Dr. Verma", count: 10 },
-  ];
+  // Departments come from the backend. Empty until connected.
+  const departments: { name: string; head: string; count: number }[] = [];
 
   return (
     <div className="flex flex-col bg-gray-50 min-h-[calc(100vh-80px)]">
@@ -28,7 +25,13 @@ export function DepartmentsList() {
 
       <div className="p-4 flex flex-col gap-4">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
-          {departments.map((dept, i) => (
+          {departments.length === 0 ? (
+            <EmptyState
+              icon={LayoutGrid}
+              title="No Departments"
+              description="Departments will appear here once available."
+            />
+          ) : departments.map((dept, i) => (
             <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">

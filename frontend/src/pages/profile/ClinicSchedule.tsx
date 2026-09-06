@@ -5,14 +5,16 @@ import { motion } from "framer-motion"
 export function ClinicSchedule() {
   const navigate = useNavigate();
 
+  // Day names are static UI config. The saved weekly availability comes from the
+  // backend and is unavailable until connected.
   const days = [
-    { name: "Monday", active: true, times: "09:00 AM - 05:00 PM" },
-    { name: "Tuesday", active: true, times: "09:00 AM - 05:00 PM" },
-    { name: "Wednesday", active: true, times: "09:00 AM - 05:00 PM" },
-    { name: "Thursday", active: true, times: "09:00 AM - 01:00 PM" },
-    { name: "Friday", active: true, times: "09:00 AM - 05:00 PM" },
-    { name: "Saturday", active: false, times: "Off" },
-    { name: "Sunday", active: false, times: "Off" },
+    { name: "Monday", active: false, times: "—" },
+    { name: "Tuesday", active: false, times: "—" },
+    { name: "Wednesday", active: false, times: "—" },
+    { name: "Thursday", active: false, times: "—" },
+    { name: "Friday", active: false, times: "—" },
+    { name: "Saturday", active: false, times: "—" },
+    { name: "Sunday", active: false, times: "—" },
   ];
 
   return (

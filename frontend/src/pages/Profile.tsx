@@ -99,19 +99,20 @@ export function Profile() {
         >
           <div className="flex items-center gap-4">
             <div className={cn("w-16 h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden", isDoctor ? "bg-[#1B5DF1] text-white border-2 border-[#0A1A3D] shadow-lg text-xl font-black" : "bg-blue-50 text-primary border border-blue-100")}>
-              {isDoctor ? "J" : <User className="w-7 h-7" />}
+              <User className="w-7 h-7" />
             </div>
             <div className="flex flex-col">
+              {/* Name, email and designation come from the backend. Unavailable until connected. */}
               <h2 className={cn("text-[18px]", isDoctor ? "font-black text-[#0A1A3D] tracking-tight" : "font-bold text-[#172033]")}>
-                {isDoctor ? "Dr. Jane Smith" : "Admin User"}
+                —
               </h2>
               <p className={cn("text-[13px] font-medium", isDoctor ? "text-gray-500" : "text-[#667085]")}>
-                {isDoctor ? "jane.smith@mediquee.com" : "user@mediquee.com"}
+                —
               </p>
               <div className="mt-1.5 flex items-center">
                 {isDoctor ? (
                   <span className="bg-[#EBF5FF] text-[#1B5DF1] text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-[#1B5DF1]/20 flex items-center gap-1">
-                    <Stethoscope className="w-3 h-3" /> Senior Cardiologist
+                    <Stethoscope className="w-3 h-3" /> Doctor
                   </span>
                 ) : role === 'nurse' ? (
                   <span className="bg-orange-50 text-orange-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-orange-100 flex items-center gap-1">

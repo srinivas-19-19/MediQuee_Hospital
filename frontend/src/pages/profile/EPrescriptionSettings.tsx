@@ -27,9 +27,10 @@ export function EPrescriptionSettings() {
           </div>
           
           <div className="flex flex-col gap-4">
+            {/* The saved signature comes from the backend. Unavailable until connected. */}
             <div className="h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400">
-              <span className="font-dancing-script text-3xl text-[#0A1A3D] opacity-80">Jane Smith</span>
-              <span className="text-xs font-bold uppercase mt-2 opacity-60">Current Signature</span>
+              <span className="font-dancing-script text-3xl text-[#0A1A3D] opacity-80">—</span>
+              <span className="text-xs font-bold uppercase mt-2 opacity-60">No Signature Added</span>
             </div>
             <button className="w-full bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors">
               Update Signature

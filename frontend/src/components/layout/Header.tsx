@@ -1,14 +1,16 @@
 import { Bell } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
-import {} from "react"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 export function Header() {
   const { role } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  
+
+  // Unread notification count comes from the backend. Hidden until available.
+  const [unreadCount] = useState<number | null>(null);
   const isDashboard = ['/dashboard', '/', '/doctor', '/nurse', '/receptionist', '/lab'].includes(location.pathname);
 
   const getScreenName = () => {
@@ -22,23 +24,25 @@ export function Header() {
     return null;
   }
 
+  // Role labels are static config. The account/facility name comes from the
+  // backend and is unavailable until connected.
   let greeting = "";
   let subTitle = "";
 
   if (role === 'admin') {
-    greeting = "City Care Hospital";
+    greeting = "—";
     subTitle = "HOSPITAL";
   } else if (role === 'doctor') {
-    greeting = "Dr. Jane Smith";
+    greeting = "—";
     subTitle = "DOCTOR";
   } else if (role === 'nurse') {
-    greeting = "Nurse User";
+    greeting = "—";
     subTitle = "NURSE";
   } else if (role === 'receptionist') {
-    greeting = "Receptionist Name";
+    greeting = "—";
     subTitle = "RECEPTIONIST";
   } else if (role === 'lab') {
-    greeting = "MediQuee Lab";
+    greeting = "—";
     subTitle = "LABORATORY";
   }
 
@@ -74,7 +78,9 @@ export function Header() {
           <div className="flex items-center gap-3 relative">
             <button onClick={() => navigate('/notifications')} className="relative p-1 text-gray-700 hover:text-[#0A1A3D] transition-colors interactive-element">
               <Bell className="w-6 h-6" strokeWidth={2} />
-              <span className={cn("absolute top-0.5 right-1 w-3.5 h-3.5 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white", primaryBg)}>3</span>
+              {unreadCount !== null && (
+                <span className={cn("absolute top-0.5 right-1 w-3.5 h-3.5 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white", primaryBg)}>{unreadCount}</span>
+              )}
             </button>
           </div>
         )}

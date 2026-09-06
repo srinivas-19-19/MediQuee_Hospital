@@ -1,25 +1,26 @@
 import { motion } from "framer-motion"
 import { UserPlus, Clock, ArrowRight, Building, CheckCircle2, Activity, PlaySquare } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { EmptyState } from "@/components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 
 export function ReceptionistDashboard() {
   const navigate = useNavigate();
 
+  // Counters come from the backend. Unavailable until connected.
   const stats = [
-    { title: "Waiting", value: "24", icon: Clock, color: "text-orange-600 bg-orange-50 border-orange-100" },
-    { title: "In Consultation", value: "8", icon: PlaySquare, color: "text-[#1B5DF1] bg-[#EBF5FF] border-[#1B5DF1]/20" },
-    { title: "Completed", value: "54", icon: CheckCircle2, color: "text-emerald-600 bg-emerald-50 border-emerald-100" },
+    { title: "Waiting", value: "—", icon: Clock, color: "text-orange-600 bg-orange-50 border-orange-100" },
+    { title: "In Consultation", value: "—", icon: PlaySquare, color: "text-[#1B5DF1] bg-[#EBF5FF] border-[#1B5DF1]/20" },
+    { title: "Completed", value: "—", icon: CheckCircle2, color: "text-emerald-600 bg-emerald-50 border-emerald-100" },
   ];
 
-  const departmentQueues = [
-    { id: 'dept-1', name: "General Medicine", waiting: 12, inConsult: 3, nextOp: "OP-104" },
-    { id: 'dept-2', name: "Cardiology", waiting: 6, inConsult: 2, nextOp: "OP-087" },
-    { id: 'dept-3', name: "Orthopedics", waiting: 9, inConsult: 1, nextOp: "OP-121" },
-  ];
+  // Department queues come from the backend. Empty until connected.
+  const departmentQueues: {
+    id: string; name: string; waiting: number; inConsult: number; nextOp: string;
+  }[] = [];
 
-  const overallRush = "Medium"; 
-  const waitingCount = 27;
+  const overallRush = "—";
+  const waitingCount = "—";
 
   return (
     <div className="flex flex-col gap-5 p-4 pb-24 min-h-[calc(100vh-80px)] bg-gray-50/30">
@@ -71,7 +72,13 @@ export function ReceptionistDashboard() {
         </div>
         
         <div className="flex flex-col gap-3">
-          {departmentQueues.map(dept => (
+          {departmentQueues.length === 0 ? (
+            <EmptyState
+              icon={Building}
+              title="No Department Queues"
+              description="Department queues will appear here once available."
+            />
+          ) : departmentQueues.map(dept => (
             <button 
               key={dept.id} 
               onClick={() => navigate(`/receptionist/queue?dept=${dept.name}`)}

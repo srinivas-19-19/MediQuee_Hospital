@@ -2,9 +2,12 @@ import { ArrowLeft, Megaphone, TrendingUp, Target, Send, Calendar } from "lucide
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { useState } from "react"
+import { adminApi } from "@/services/adminApi"
+import { useToast } from "@/context/ToastContext"
 
 export function BookMarketing() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -16,18 +19,26 @@ export function BookMarketing() {
   ];
 
   const toggleService = (id: string) => {
-    setSelectedServices(prev => 
+    setSelectedServices(prev =>
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const form = new FormData(e.currentTarget);
+      await adminApi.requestMarketing({
+        services: selectedServices,
+        preferredTime: form.get('preferredTime'),
+      });
       setIsSubmitted(true);
-    }, 1500);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to submit request', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,7 +123,7 @@ export function BookMarketing() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <Calendar className="w-5 h-5" />
                   </div>
-                  <select required className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm appearance-none">
+                  <select name="preferredTime" required className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm appearance-none">
                     <option value="">Select a time</option>
                     <option value="morning">Morning (9 AM - 12 PM)</option>
                     <option value="afternoon">Afternoon (12 PM - 4 PM)</option>

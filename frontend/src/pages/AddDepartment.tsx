@@ -6,6 +6,7 @@ import { ArrowLeft, Building2, ChevronDown, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
+import { adminApi } from "@/services/adminApi"
 import { cn } from "@/lib/utils"
 
 const departmentSchema = z.object({
@@ -30,13 +31,16 @@ export function AddDepartment() {
     }
   });
 
-  const onSubmit = async (_data: DepartmentFormValues) => {
+  const onSubmit = async (data: DepartmentFormValues) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    toast("Department created successfully", "success");
-    navigate(-1);
+    try {
+      await adminApi.createDepartment(data);
+      navigate(-1);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to create department', "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const handleBack = () => {

@@ -3,18 +3,17 @@ import { ArrowLeft, Download, Share2, User, FlaskConical, FileText } from "lucid
 import { motion } from "framer-motion"
 import { StatusBadge } from "@/components/lab/LabUI"
 
-const mockReports: Record<string, {
+// Report records come from the backend (GET /api/lab/reports/:id).
+// BACKEND_MISSING: empty until connected — the not-found state below is shown.
+const reports: Record<string, {
   id: string; patient: string; phone: string; test: string; date: string;
   reportDate: string; status: 'ready' | 'delivered'; filename: string
-}> = {
-  'MQ-10285': { id: 'MQ-10285', patient: 'Priya Sharma', phone: '+91 87654 32109', test: 'Thyroid Profile (T3, T4, TSH)', date: '14 Aug 2026', reportDate: '14 Aug 2026', status: 'ready', filename: 'Thyroid_Report_Priya.pdf' },
-  'MQ-10283': { id: 'MQ-10283', patient: 'Arun Krishnan', phone: '+91 99887 76655', test: 'CBC + ESR', date: '13 Aug 2026', reportDate: '13 Aug 2026', status: 'delivered', filename: 'CBC_ESR_Arun.pdf' },
-}
+}> = {}
 
 export function ReportView() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const report = mockReports[id ?? '']
+  const report = reports[id ?? '']
 
   if (!report) {
     return (

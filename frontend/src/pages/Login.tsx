@@ -1,6 +1,8 @@
 import { motion } from "framer-motion"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
+import { useToast } from "@/context/ToastContext"
+import { authApi } from "@/services/authApi"
 import { Mail, Lock, ArrowRight, Activity, ShieldCheck } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -17,22 +19,29 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+  const { toast } = useToast();
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       role: 'admin'
     }
   });
 
-  const onSubmit = (data: LoginFormValues) => {
-    // We simulate authentication here; in a real app, send data.email / data.password to API
-    login(data.role); 
-    if (data.role === 'lab') navigate("/lab");
-    else if (data.role === 'doctor') navigate("/doctor");
-    else if (data.role === 'nurse') navigate("/nurse");
-    else if (data.role === 'receptionist') navigate("/receptionist");
-    else navigate("/dashboard");
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      // Credentials are verified by the backend, which issues the session role.
+      // The role selector below is not used to grant access.
+      const session = await authApi.login({ email: data.email, password: data.password });
+      login(session.role);
+      if (session.role === 'lab') navigate("/lab");
+      else if (session.role === 'doctor') navigate("/doctor");
+      else if (session.role === 'nurse') navigate("/nurse");
+      else if (session.role === 'receptionist') navigate("/receptionist");
+      else navigate("/dashboard");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to sign in', 'error');
+    }
   }
 
   return (
@@ -69,10 +78,10 @@ export function Login() {
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
                 <Mail className="w-5 h-5" />
               </div>
-              <input 
+              <input
                 {...register("email")}
-                type="email" 
-                placeholder="admin@mediquee.com" 
+                type="email"
+                placeholder="Email address"
                 className={`w-full pl-12 pr-4 py-3.5 bg-white border ${errors.email ? 'border-red-500 focus:ring-red-500/10' : 'border-gray-200 focus:border-primary focus:ring-primary/10'} rounded-2xl outline-none focus:ring-4 transition-all text-sm font-medium`}
               />
             </div>
@@ -124,8 +133,9 @@ export function Login() {
             transition={{ delay: 0.5 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            type="submit" 
-            className="w-full bg-primary text-white font-bold py-4 rounded-2xl mt-4 shadow-lg shadow-primary/25 flex items-center justify-center gap-2 group"
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-primary text-white font-bold py-4 rounded-2xl mt-4 shadow-lg shadow-primary/25 flex items-center justify-center gap-2 group disabled:opacity-70"
           >
             Log In
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

@@ -3,20 +3,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, Loader2, User, FlaskConical, CheckCircle2, Plus } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
+import { labApi } from "@/services/labApi"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
+import { EmptyState } from "@/components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 import { getConditionIconPath } from "@/components/shared/ConditionLabel"
 
-const availableTests = [
-  { id: 't1', name: 'CBC', price: 300 },
-  { id: 't2', name: 'Lipid Profile', price: 550 },
-  { id: 't3', name: 'Thyroid Profile', price: 650 },
-  { id: 't4', name: 'HbA1c', price: 450 },
-  { id: 't5', name: 'Liver Function Test', price: 750 },
-  { id: 't6', name: 'Kidney Function Test', price: 700 },
-  { id: 't7', name: 'Urine Routine', price: 200 },
-  { id: 't8', name: 'Blood Sugar (FBS)', price: 150 },
-]
+// The bookable test catalog comes from the backend. Empty until connected.
+const availableTests: { id: string; name: string; price: number }[] = []
 
 type Step = 1 | 2 | 3
 
@@ -50,10 +44,15 @@ export function CreateOrder() {
 
   const onSubmit = async () => {
     setIsSubmitting(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setIsSubmitting(false)
-    toast("Order created successfully", "success")
-    navigate('/lab/orders')
+    try {
+      await labApi.createOrder({ patientName, mobile, email, sampleType, tests: selectedTests })
+      toast("Order created successfully", "success")
+      navigate('/lab/orders')
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to create order', "error")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -111,6 +110,13 @@ export function CreateOrder() {
               </div>
             </div>
             <h2 className="text-[16px] md:text-[20px] font-bold text-[#172033]">Select Tests</h2>
+            {availableTests.length === 0 ? (
+              <EmptyState
+                icon={FlaskConical}
+                title="No Tests Available"
+                description="The lab's test catalog will appear here once available."
+              />
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
               {availableTests.map(t => {
                 const selected = selectedTests.includes(t.id)
@@ -142,6 +148,7 @@ export function CreateOrder() {
                 )
               })}
             </div>
+            )}
           </motion.div>
         )}
 

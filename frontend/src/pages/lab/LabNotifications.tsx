@@ -1,24 +1,17 @@
 import { motion } from "framer-motion"
-import { ArrowLeft, ClipboardList, FlaskConical, Upload, Home, IndianRupee } from "lucide-react"
+import { ArrowLeft, Bell } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { EmptyState } from "@/components/ui/EmptyState"
 
-const notifications = [
-  {
-    group: 'Today',
-    items: [
-      { icon: ClipboardList, color: 'text-primary', bg: 'bg-blue-50', title: 'New Test Order', body: 'Ramesh Kumar ordered CBC + Lipid Profile', time: '10:30 AM', unread: true },
-      { icon: Upload, color: 'text-emerald-600', bg: 'bg-emerald-50', title: 'Report Uploaded', body: 'Thyroid Profile report for Priya Sharma is ready', time: '11:00 AM', unread: true },
-      { icon: Home, color: 'text-amber-600', bg: 'bg-amber-50', title: 'Home Collection Request', body: 'Sunita Patel: 42 MG Road — Today 9:00 AM', time: '8:45 AM', unread: false },
-    ]
-  },
-  {
-    group: 'Yesterday',
-    items: [
-      { icon: FlaskConical, color: 'text-purple-600', bg: 'bg-purple-50', title: 'Sample Collected', body: 'Blood sample collected for Mohammed Ali', time: '3:00 PM', unread: false },
-      { icon: IndianRupee, color: 'text-emerald-600', bg: 'bg-emerald-50', title: 'Payment Received', body: '₹850 received for order MQ-10284', time: '11:30 AM', unread: false },
-    ]
-  }
-]
+// Notifications come from the backend. Empty until connected.
+const notifications: {
+  group: string;
+  items: {
+    icon: LucideIcon; color: string; bg: string;
+    title: string; body: string; time: string; unread: boolean;
+  }[];
+}[] = []
 
 export function LabNotifications() {
   const navigate = useNavigate()
@@ -34,7 +27,13 @@ export function LabNotifications() {
       </div>
 
       <div className="flex flex-col gap-6 px-4 md:px-6 pt-5 md:pt-8 pb-6 max-w-3xl mx-auto w-full">
-        {notifications.map(group => (
+        {notifications.length === 0 ? (
+          <EmptyState
+            icon={Bell}
+            title="No Notifications"
+            description="Lab notifications will appear here once available."
+          />
+        ) : notifications.map(group => (
           <motion.div key={group.group} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
             <p className="text-[12px] md:text-[14px] font-bold text-[#98A2B3] uppercase tracking-widest mb-3 md:mb-4">{group.group}</p>
             <div className="flex flex-col gap-2 md:gap-3">

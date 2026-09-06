@@ -1,5 +1,5 @@
 import { Search, MapPin, Clock, CheckCircle, Phone, Calendar as CalendarIcon, Play } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { EmptyState } from "@/components/ui/EmptyState"
@@ -8,27 +8,19 @@ import { cn } from "@/lib/utils"
 export function NurseVisits() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
 
-  const upcomingVisits = [
-    { id: 1, name: "Sneha Patel", time: "11:00 AM", date: "Today", service: "Post-op Care", address: "123 Park Street, City", status: "Next", distance: "2.4 km" },
-    { id: 2, name: "Arun Verma", time: "02:00 PM", date: "Today", service: "Wound Dressing", address: "45 Lake View Apts", status: "Scheduled", distance: "4.1 km" },
-    { id: 3, name: "Maria Garcia", time: "09:30 AM", date: "Tomorrow", service: "IV Injection", address: "78 Sunrise Blvd", status: "Scheduled", distance: "5.5 km" },
-  ];
+  // Home visit records come from the backend. Empty until connected.
+  const upcomingVisits: {
+    id: number; name: string; time: string; date: string; service: string;
+    address: string; status: string; distance: string;
+  }[] = [];
 
-  const historyVisits = [
-    { id: 4, name: "Ramesh Kumar", time: "09:00 AM", date: "Today", service: "Post-op Care", status: "Completed" },
-    { id: 5, name: "Priya Sharma", time: "04:30 PM", date: "Yesterday", service: "Injection / Dressing", status: "Completed" },
-    { id: 6, name: "John Doe", time: "11:00 AM", date: "12 May 2025", service: "Vitals Check", status: "Completed" },
-  ];
+  const historyVisits: {
+    id: number; name: string; time: string; date: string; service: string; status: string;
+  }[] = [];
 
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
-  }, [activeTab]);
-
-  const displayedVisits = activeTab === 'upcoming' 
+  const displayedVisits = activeTab === 'upcoming'
     ? upcomingVisits.filter(v => v.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : historyVisits.filter(v => v.name.toLowerCase().includes(searchQuery.toLowerCase()));
 

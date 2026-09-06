@@ -6,7 +6,7 @@ import { getConditionIconPath } from './ConditionLabel';
 
 
 
-// Mock list of specializations
+// Static selectable specialization options (UI config, not backend data)
 export const allSpecializations = [
   "Cardiology",
   "Neurology",
@@ -24,7 +24,7 @@ export const allSpecializations = [
   "Radiology",
 ];
 
-// Mock list of tests
+// Static selectable test options (UI config, not backend data)
 export const allTests = [
   "Complete Blood Count",
   "Lipid Profile",

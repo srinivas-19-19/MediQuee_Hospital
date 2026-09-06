@@ -2,19 +2,15 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, Search, FlaskConical, Edit2, ToggleLeft, ToggleRight, Plus } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useToast } from "@/context/ToastContext"
+import { labApi } from "@/services/labApi"
 import { cn } from "@/lib/utils"
 
-const basePath = import.meta.env.BASE_URL;
-
-const initialTests = [
-  { id: 't1', name: 'Complete Blood Count (CBC)', category: 'Blood', sample: 'Blood', price: 300, tat: '4 hrs', status: true, icon: `${basePath}png/025-pcr-test.png` },
-  { id: 't2', name: 'Lipid Profile', category: 'Blood', sample: 'Blood', price: 550, tat: '6 hrs', status: true, icon: `${basePath}png/015-body-scan.png` },
-  { id: 't3', name: 'Thyroid Profile (T3,T4,TSH)', category: 'Blood', sample: 'Blood', price: 650, tat: '24 hrs', status: true, icon: `${basePath}png/093-dna.png` },
-  { id: 't4', name: 'HbA1c', category: 'Blood', sample: 'Blood', price: 450, tat: '24 hrs', status: true, icon: `${basePath}png/050-bacteria.png` },
-  { id: 't5', name: 'Liver Function Test', category: 'Blood', sample: 'Blood', price: 750, tat: '6 hrs', status: true, icon: `${basePath}png/011-liver.png` },
-  { id: 't6', name: 'Urine Routine Examination', category: 'Urine', sample: 'Urine', price: 200, tat: '2 hrs', status: false, icon: `${basePath}png/004-infection.png` },
-  { id: 't7', name: 'X-Ray Chest PA View', category: 'Imaging', sample: 'Imaging', price: 350, tat: '1 hr', status: true, icon: `${basePath}png/008-lungs.png` },
-]
+// Catalog tests come from the backend. Empty until connected.
+const initialTests: {
+  id: string; name: string; category: string; sample: string;
+  price: number; tat: string; status: boolean; icon: string;
+}[] = []
 
 const categoryColors: Record<string, string> = {
   Blood: 'bg-red-50 text-red-600 border-red-100',
@@ -25,6 +21,7 @@ const categoryColors: Record<string, string> = {
 
 export function TestCatalog() {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [tests, setTests] = useState(initialTests)
   const [search, setSearch] = useState('')
 
@@ -32,8 +29,14 @@ export function TestCatalog() {
     !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.category.toLowerCase().includes(search.toLowerCase())
   )
 
-  const toggleStatus = (id: string) =>
-    setTests(prev => prev.map(t => t.id === id ? { ...t, status: !t.status } : t))
+  const toggleStatus = async (id: string, active: boolean) => {
+    try {
+      await labApi.updateTestStatus(id, active)
+      setTests(prev => prev.map(t => t.id === id ? { ...t, status: active } : t))
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to update test status', "error")
+    }
+  }
 
   return (
     <div className="flex flex-col bg-background min-h-screen w-full">
@@ -99,7 +102,7 @@ export function TestCatalog() {
                       <button onClick={() => {}} className="p-1.5 md:p-2 rounded-xl hover:bg-gray-100 text-[#667085] transition-colors">
                         <Edit2 className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
-                      <button onClick={() => toggleStatus(test.id)} className="p-1 hover:opacity-80 transition-opacity">
+                      <button onClick={() => toggleStatus(test.id, !test.status)} className="p-1 hover:opacity-80 transition-opacity">
                         {test.status
                           ? <ToggleRight className="w-7 h-7 md:w-8 md:h-8 text-primary" />
                           : <ToggleLeft className="w-7 h-7 md:w-8 md:h-8 text-[#98A2B3]" />

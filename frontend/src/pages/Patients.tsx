@@ -1,6 +1,7 @@
-import { Search, Filter, Phone, Calendar, User } from "lucide-react"
+import { Search, Filter, Phone, Calendar, User, Users } from "lucide-react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import { EmptyState } from "../components/ui/EmptyState"
 
 export function Patients() {
   const navigate = useNavigate();
@@ -17,13 +18,8 @@ export function Patients() {
     show: { opacity: 1, y: 0 }
   };
 
-  const patients = [
-    { id: 1, name: "Rahul Sharma", age: "45 Y", gender: "Male", phone: "+91 98765 43210", lastVisit: "12 May 2025" },
-    { id: 2, name: "Priya Patel", age: "32 Y", gender: "Female", phone: "+91 87654 32109", lastVisit: "10 May 2025" },
-    { id: 3, name: "Amit Kumar", age: "28 Y", gender: "Male", phone: "+91 76543 21098", lastVisit: "08 May 2025" },
-    { id: 4, name: "Sneha Reddy", age: "50 Y", gender: "Female", phone: "+91 65432 10987", lastVisit: "05 May 2025" },
-    { id: 5, name: "Vikram Singh", age: "62 Y", gender: "Male", phone: "+91 54321 09876", lastVisit: "01 May 2025" },
-  ];
+  // Patient records come from the backend. Empty until connected.
+  const patients: { id: number; name: string; age: string; gender: string; phone: string; lastVisit: string }[] = [];
 
   return (
     <div className="flex flex-col bg-white min-h-[calc(100vh-80px)] pb-24">
@@ -53,7 +49,13 @@ export function Patients() {
         animate="show"
         className="px-4 py-4 flex flex-col gap-3"
       >
-        {patients.map((patient) => (
+        {patients.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No Patients"
+            description="Registered patients will appear here once available."
+          />
+        ) : patients.map((patient) => (
           <motion.div 
             key={patient.id}
             variants={item}

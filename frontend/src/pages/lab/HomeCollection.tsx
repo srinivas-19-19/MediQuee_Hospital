@@ -5,11 +5,11 @@ import { useNavigate } from "react-router-dom"
 import { StatusBadge } from "@/components/lab/LabUI"
 import { cn } from "@/lib/utils"
 
-const mockRequests = [
-  { id: 'HC-001', patient: 'Sunita Patel', address: '42, MG Road, Banjara Hills', test: 'CBC + Thyroid', date: 'Today', time: '9:00 AM', status: 'pending' as const, fee: '₹150' },
-  { id: 'HC-002', patient: 'Rahul Sharma', address: '8/B, Jubilee Hills, Near Park', test: 'Lipid Profile', date: 'Today', time: '11:00 AM', status: 'collected' as const, fee: '₹150' },
-  { id: 'HC-003', patient: 'Anita Rao', address: '15, Film Nagar, Hyderabad', test: 'Urine Routine', date: 'Tomorrow', time: '8:30 AM', status: 'pending' as const, fee: '₹150' },
-]
+// Home collection requests come from the backend. Empty until connected.
+const collectionRequests: {
+  id: string; patient: string; address: string; test: string; date: string; time: string;
+  status: 'pending' | 'collected' | 'processing' | 'ready' | 'delivered' | 'cancelled'; fee: string;
+}[] = []
 
 const filters = ['All', 'Pending', 'Collected', 'Completed']
 const filterMap: Record<string, string> = { 'Pending': 'pending', 'Collected': 'collected', 'Completed': 'delivered' }
@@ -18,7 +18,7 @@ export function HomeCollection() {
   const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState('All')
 
-  const filtered = activeFilter === 'All' ? mockRequests : mockRequests.filter(r => r.status === filterMap[activeFilter])
+  const filtered = activeFilter === 'All' ? collectionRequests : collectionRequests.filter(r => r.status === filterMap[activeFilter])
 
   return (
     <div className="flex flex-col bg-background min-h-screen w-full">
@@ -36,9 +36,9 @@ export function HomeCollection() {
         {/* Summary */}
         <div className="grid grid-cols-3 gap-2 md:gap-4 max-w-3xl">
           {[
-            { label: "Today's", count: 2, color: 'text-primary', bg: 'bg-blue-50', border: 'border-blue-200' },
-            { label: 'Scheduled', count: 1, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
-            { label: 'Completed', count: 4, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+            { label: "Today's", count: '—', color: 'text-primary', bg: 'bg-blue-50', border: 'border-blue-200' },
+            { label: 'Scheduled', count: '—', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
+            { label: 'Completed', count: '—', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
           ].map(s => (
             <div key={s.label} className={cn("flex flex-col items-center py-3 md:py-4 rounded-2xl md:rounded-3xl border transition-all hover:shadow-sm", s.bg, s.border)}>
               <span className={cn("text-[22px] md:text-[28px] font-bold", s.color)}>{s.count}</span>

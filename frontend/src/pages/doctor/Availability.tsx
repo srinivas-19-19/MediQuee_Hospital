@@ -1,7 +1,8 @@
-import { Save, Calendar, CheckCircle2, Video, Stethoscope, ArrowLeft } from "lucide-react"
+import { Save, Calendar, Video, Stethoscope, ArrowLeft } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import {} from "@/lib/utils"
+import { useToast } from "@/context/ToastContext"
+import { doctorApi } from "@/services/doctorApi"
 
 interface DayAvailability {
   day: string;
@@ -14,17 +15,22 @@ interface DayAvailability {
 
 export function Availability() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // The week structure is static UI config; the active flags and hours are the
+  // doctor's saved availability and come from the backend.
+  // BACKEND_MISSING: implement GET /api/doctors/me/availability to hydrate this.
   const [schedule, setSchedule] = useState<DayAvailability[]>([
-    { day: "Monday", active: true, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "15:00", videoEndTime: "18:00" },
-    { day: "Tuesday", active: true, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "15:00", videoEndTime: "18:00" },
-    { day: "Wednesday", active: true, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "15:00", videoEndTime: "18:00" },
-    { day: "Thursday", active: true, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "15:00", videoEndTime: "18:00" },
-    { day: "Friday", active: true, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "15:00", videoEndTime: "18:00" },
-    { day: "Saturday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "15:00", videoEndTime: "18:00" },
-    { day: "Sunday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "15:00", videoEndTime: "18:00" },
+    { day: "Monday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
+    { day: "Tuesday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
+    { day: "Wednesday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
+    { day: "Thursday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
+    { day: "Friday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
+    { day: "Saturday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
+    { day: "Sunday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
   ]);
 
-  const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const updateDay = (index: number, field: keyof DayAvailability, value: any) => {
     const newSchedule = [...schedule];
@@ -32,9 +38,15 @@ export function Availability() {
     setSchedule(newSchedule);
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await doctorApi.updateAvailability(schedule);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to save availability', "error");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -127,15 +139,12 @@ export function Availability() {
           </div>
         ))}
         
-        <button 
+        <button
           onClick={handleSave}
-          className={`mt-2 flex items-center justify-center gap-2 py-4 rounded-[16px] font-bold text-[15px] text-white shadow-[0_8px_20px_rgba(27,93,241,0.25)] transition-all active:scale-[0.98] ${saved ? 'bg-emerald-500 shadow-[0_8px_20px_rgba(16,185,129,0.25)]' : 'bg-[#1B5DF1] hover:bg-[#1B5DF1]/90'}`}
+          disabled={isSaving}
+          className="mt-2 flex items-center justify-center gap-2 py-4 rounded-[16px] font-bold text-[15px] text-white shadow-[0_8px_20px_rgba(27,93,241,0.25)] transition-all active:scale-[0.98] bg-[#1B5DF1] hover:bg-[#1B5DF1]/90 disabled:opacity-60"
         >
-          {saved ? (
-            <><CheckCircle2 className="w-5 h-5" /> Saved Successfully</>
-          ) : (
-            <><Save className="w-5 h-5" /> Save Availability</>
-          )}
+          <Save className="w-5 h-5" /> {isSaving ? "Saving..." : "Save Availability"}
         </button>
       </div>
     </div>

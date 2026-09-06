@@ -3,22 +3,17 @@ import { motion } from "framer-motion"
 import { ArrowLeft, Loader2, Package, Plus, X, Check } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
+import { labApi } from "@/services/labApi"
 import { cn } from "@/lib/utils"
 
-const availableTests = [
-  { id: 't1', name: 'CBC', price: 300 },
-  { id: 't2', name: 'Lipid Profile', price: 550 },
-  { id: 't3', name: 'Thyroid Profile', price: 650 },
-  { id: 't4', name: 'HbA1c', price: 450 },
-  { id: 't5', name: 'Liver Function Test', price: 750 },
-  { id: 't6', name: 'Kidney Function Test', price: 700 },
-  { id: 't7', name: 'Blood Sugar (FBS)', price: 150 },
-]
+// The lab's test catalog comes from the backend. Empty until connected.
+const availableTests: { id: string; name: string; price: number }[] = []
 
-const existingPackages = [
-  { id: 'p1', name: 'Basic Health Package', tests: ['CBC', 'Blood Sugar (FBS)', 'Lipid Profile', 'Thyroid Profile'], originalPrice: 1450, packagePrice: 1199, status: 'active' },
-  { id: 'p2', name: 'Diabetes Panel', tests: ['HbA1c', 'Blood Sugar (FBS)', 'Kidney Function Test'], originalPrice: 1300, packagePrice: 999, status: 'active' },
-]
+// Saved packages come from the backend. Empty until connected.
+const existingPackages: {
+  id: string; name: string; tests: string[];
+  originalPrice: number; packagePrice: number; status: string;
+}[] = []
 
 export function TestPackages() {
   const navigate = useNavigate()
@@ -38,11 +33,16 @@ export function TestPackages() {
   const handleSave = async () => {
     if (!pkgName || !pkgPrice || selectedTests.length === 0) { toast("Fill all required fields", "error"); return }
     setIsSubmitting(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setIsSubmitting(false)
-    toast("Package created successfully", "success")
-    setShowAdd(false)
-    setPkgName(''); setPkgPrice(''); setSelectedTests([])
+    try {
+      await labApi.createPackage({ name: pkgName, price: pkgPrice, tests: selectedTests })
+      toast("Package created successfully", "success")
+      setShowAdd(false)
+      setPkgName(''); setPkgPrice(''); setSelectedTests([])
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to create package', "error")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -73,6 +73,9 @@ export function TestPackages() {
 
             <div className="flex flex-col gap-2 md:gap-3">
               <label className="text-[13px] md:text-[14px] font-semibold text-[#172033]">Select Tests <span className="text-destructive">*</span></label>
+              {availableTests.length === 0 ? (
+                <p className="text-[13px] md:text-[14px] text-[#98A2B3] px-1">Test catalog unavailable.</p>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
                 {availableTests.map(t => (
                   <button key={t.id} onClick={() => toggleTest(t.id)}
@@ -85,6 +88,7 @@ export function TestPackages() {
                   </button>
                 ))}
               </div>
+              )}
             </div>
 
             {selectedTests.length > 0 && (

@@ -4,21 +4,18 @@ import { motion } from "framer-motion"
 import { StatusBadge } from "@/components/lab/LabUI"
 import { cn } from "@/lib/utils"
 
-// Mock order data — replace with API call
-const mockOrders: Record<string, {
+// Order records come from the backend (GET /api/lab/orders/:id).
+// BACKEND_MISSING: empty until connected — the not-found state below is shown.
+const orders: Record<string, {
   id: string; patient: string; phone: string; test: string[]; sample: string;
   sampleStatus: 'pending' | 'collected' | 'processing' | 'ready' | 'delivered';
   reportStatus: 'pending' | 'ready' | 'delivered'; amount: string; date: string; time: string;
-}> = {
-  'MQ-10284': { id: 'MQ-10284', patient: 'Ramesh Kumar', phone: '+91 98765 43210', test: ['CBC', 'Lipid Profile'], sample: 'Blood', sampleStatus: 'processing', reportStatus: 'pending', amount: '₹850', date: '14 Aug 2026', time: '10:30 AM' },
-  'MQ-10285': { id: 'MQ-10285', patient: 'Priya Sharma', phone: '+91 87654 32109', test: ['Thyroid Profile (T3, T4, TSH)'], sample: 'Blood', sampleStatus: 'ready', reportStatus: 'ready', amount: '₹650', date: '14 Aug 2026', time: '11:15 AM' },
-  'MQ-10286': { id: 'MQ-10286', patient: 'Mohammed Ali', phone: '+91 76543 21098', test: ['Urine Routine', 'Urine Culture'], sample: 'Urine', sampleStatus: 'pending', reportStatus: 'pending', amount: '₹500', date: '14 Aug 2026', time: '12:00 PM' },
-}
+}> = {}
 
 export function LabOrderDetail() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const order = mockOrders[id ?? '']
+  const order = orders[id ?? '']
 
   if (!order) {
     return (
@@ -111,7 +108,7 @@ export function LabOrderDetail() {
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
               <Section title="Payment">
                 <Row label="Total Amount" value={<span className="text-[16px] md:text-[18px] font-bold text-[#172033]">{order.amount}</span>} />
-                <Row label="Status" value={<span className="text-emerald-600 font-semibold">Paid</span>} />
+                <Row label="Status" value={<span className="text-[#98A2B3]">—</span>} />
               </Section>
             </motion.div>
           </div>

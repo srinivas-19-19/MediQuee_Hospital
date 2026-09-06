@@ -2,6 +2,7 @@ import { useState } from "react"
 import { ArrowLeft, Loader2, FlaskConical, Check } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
+import { labApi } from "@/services/labApi"
 import { cn } from "@/lib/utils"
 
 const inputClass = "w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-[15px] placeholder:text-[#98A2B3] shadow-sm transition-all"
@@ -10,13 +11,20 @@ export function LabInfo() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [homeCollection, setHomeCollection] = useState(true)
+  // The saved home-collection setting comes from the backend.
+  // BACKEND_MISSING: implement GET /api/lab/me to hydrate this form.
+  const [homeCollection, setHomeCollection] = useState(false)
 
   const handleSave = async () => {
     setIsSubmitting(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setIsSubmitting(false)
-    toast("Lab information updated", "success")
+    try {
+      await labApi.updateLabInfo({ homeCollection })
+      toast("Lab information updated", "success")
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to update lab information', "error")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -39,15 +47,15 @@ export function LabInfo() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
           {[
-            { label: 'Lab Name', defaultValue: 'City Care Diagnostics', type: 'text', fullWidth: true },
-            { label: 'Phone', defaultValue: '+91 98765 43210', type: 'tel' },
-            { label: 'Email', defaultValue: 'admin@citycarediag.com', type: 'email' },
-            { label: 'Address', defaultValue: '42, MG Road, Banjara Hills, Hyderabad', type: 'text', fullWidth: true },
-            { label: 'Operating Hours', defaultValue: '8:00 AM – 8:00 PM', type: 'text', fullWidth: true },
+            { label: 'Lab Name', placeholder: 'Laboratory name', type: 'text', fullWidth: true },
+            { label: 'Phone', placeholder: 'Contact number', type: 'tel' },
+            { label: 'Email', placeholder: 'Contact email', type: 'email' },
+            { label: 'Address', placeholder: 'Full address with landmark', type: 'text', fullWidth: true },
+            { label: 'Operating Hours', placeholder: 'e.g. 8:00 AM – 8:00 PM', type: 'text', fullWidth: true },
           ].map(f => (
             <div key={f.label} className={cn("flex flex-col gap-1.5 md:gap-2", f.fullWidth ? "md:col-span-2" : "")}>
               <label className="text-[13px] md:text-[14px] font-semibold text-[#172033]">{f.label}</label>
-              <input type={f.type} defaultValue={f.defaultValue} className={cn(inputClass, "md:px-5 md:py-3.5 md:text-[16px] md:rounded-2xl")} />
+              <input type={f.type} placeholder={f.placeholder} className={cn(inputClass, "md:px-5 md:py-3.5 md:text-[16px] md:rounded-2xl")} />
             </div>
           ))}
         </div>

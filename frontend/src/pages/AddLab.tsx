@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
+import { adminApi } from "@/services/adminApi"
 import { cn } from "@/lib/utils"
 
 const labSchema = z.object({
@@ -21,17 +22,23 @@ export function AddLab() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  
+  // Services are entered by the user; no pre-seeded values.
+  const [services, setServices] = useState<string[]>([]);
+
   const { register, handleSubmit, formState: { errors, isDirty } } = useForm<LabFormValues>({
     resolver: zodResolver(labSchema),
   });
 
-  const onSubmit = async (_data: LabFormValues) => {
+  const onSubmit = async (data: LabFormValues) => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    toast("Laboratory added successfully", "success");
-    navigate(-1);
+    try {
+      await adminApi.createLab({ ...data, services });
+      navigate(-1);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to add laboratory', "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const handleBack = () => {
@@ -90,12 +97,18 @@ export function AddLab() {
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-semibold text-[#172033]">Services Offered</label>
             <div className="border border-gray-200/60 rounded-xl p-4 flex flex-wrap gap-2 bg-white shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-              <span className="bg-blue-50 text-primary text-[13px] font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-blue-100">
-                Blood Test <button type="button" className="hover:bg-blue-100 rounded-full p-0.5 transition-colors"><X className="w-3 h-3" /></button>
-              </span>
-              <span className="bg-blue-50 text-primary text-[13px] font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-blue-100">
-                Urine Analysis <button type="button" className="hover:bg-blue-100 rounded-full p-0.5 transition-colors"><X className="w-3 h-3" /></button>
-              </span>
+              {services.map((service) => (
+                <span key={service} className="bg-blue-50 text-primary text-[13px] font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-blue-100">
+                  {service}
+                  <button
+                    type="button"
+                    onClick={() => setServices(prev => prev.filter(s => s !== service))}
+                    className="hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
               <button type="button" className="bg-gray-50 text-[#667085] text-[13px] font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-gray-200 hover:bg-gray-100 active:bg-gray-200 transition-colors">
                 <Plus className="w-3.5 h-3.5" /> Add Service
               </button>

@@ -2,19 +2,32 @@ import { ArrowLeft, Calendar, MapPin, Users, HeartPulse, Send } from "lucide-rea
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { useState } from "react"
+import { adminApi } from "@/services/adminApi"
+import { useToast } from "@/context/ToastContext"
 
 export function BookMedicalCamp() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const form = new FormData(e.currentTarget);
+      await adminApi.requestMedicalCamp({
+        location: form.get('location'),
+        expectedDate: form.get('expectedDate'),
+        expectedFootfall: form.get('expectedFootfall'),
+        speciality: form.get('speciality'),
+      });
       setIsSubmitted(true);
-    }, 1500);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Unable to submit request', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -65,7 +78,7 @@ export function BookMedicalCamp() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <MapPin className="w-5 h-5" />
                   </div>
-                  <input type="text" required placeholder="e.g. Community Hall, Andheri East" className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm" />
+                  <input type="text" name="location" required placeholder="e.g. Community Hall, Andheri East" className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm" />
                 </div>
               </div>
 
@@ -75,7 +88,7 @@ export function BookMedicalCamp() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <Calendar className="w-5 h-5" />
                   </div>
-                  <input type="date" required className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm" />
+                  <input type="date" name="expectedDate" required className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm" />
                 </div>
               </div>
 
@@ -85,7 +98,7 @@ export function BookMedicalCamp() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <Users className="w-5 h-5" />
                   </div>
-                  <select required className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm appearance-none">
+                  <select name="expectedFootfall" required className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm appearance-none">
                     <option value="">Select expected crowd</option>
                     <option value="50-100">50 - 100 people</option>
                     <option value="100-300">100 - 300 people</option>
@@ -97,7 +110,7 @@ export function BookMedicalCamp() {
               
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Target Speciality (Optional)</label>
-                <input type="text" placeholder="e.g. Eye Camp, Cardiac checkup" className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm" />
+                <input type="text" name="speciality" placeholder="e.g. Eye Camp, Cardiac checkup" className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm" />
               </div>
             </div>
 

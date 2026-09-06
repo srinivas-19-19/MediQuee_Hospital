@@ -34,7 +34,7 @@ interface LabKpiCardProps {
   icon: LucideIcon
   label: string
   value: string
-  trend: string
+  trend?: string
   trendUp?: boolean
   iconBg?: string
   iconColor?: string
@@ -47,7 +47,7 @@ export function LabKpiCard({ icon: Icon, label, value, trend, trendUp = true, ic
         <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center", iconBg)}>
           <Icon className={cn("w-4 h-4", iconColor)} strokeWidth={2} />
         </div>
-        <span className={cn("text-[11px] font-semibold", trendUp ? "text-emerald-600" : "text-red-500")}>{trend}</span>
+        {trend && <span className={cn("text-[11px] font-semibold", trendUp ? "text-emerald-600" : "text-red-500")}>{trend}</span>}
       </div>
       <div>
         <div className="text-[22px] font-bold text-[#172033] leading-tight">{value}</div>

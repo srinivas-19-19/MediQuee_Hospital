@@ -8,19 +8,16 @@ import { ConditionLabel } from "@/components/shared/ConditionLabel"
 
 const services = ['All', 'Blood', 'Urine', 'Pathology', 'Imaging']
 
-const dates = ['Today', '14 Aug', '13 Aug', '12 Aug', '11 Aug', '10 Aug']
+// 'Today' is the static default; the rest of the date strip comes from the
+// backend / calendar selection.
+const dates = ['Today']
 
-
-const allOrders = [
-  { id: 'MQ-10284', patient: 'Ramesh Kumar', test: 'CBC + Lipid Profile', sample: 'Blood', time: '10:30 AM', amount: '₹850', status: 'processing' as const, service: 'Blood', type: 'In-Person' },
-  { id: 'MQ-10285', patient: 'Priya Sharma', test: 'Thyroid Profile', sample: 'Blood', time: '11:15 AM', amount: '₹650', status: 'ready' as const, service: 'Blood', type: 'In-Person' },
-  { id: 'MQ-10286', patient: 'Mohammed Ali', test: 'Urine Routine', sample: 'Urine', time: '12:00 PM', amount: '₹200', status: 'pending' as const, service: 'Urine', type: 'In-Person' },
-  { id: 'MQ-10287', patient: 'Lakshmi Devi', test: 'HbA1c', sample: 'Blood', time: '1:30 PM', amount: '₹450', status: 'collected' as const, service: 'Blood', type: 'In-Person' },
-  { id: 'MQ-10288', patient: 'Vijay Rajan', test: 'X-Ray Chest', sample: 'Imaging', time: '2:00 PM', amount: '₹350', status: 'pending' as const, service: 'Imaging', type: 'In-Person' },
-  { id: 'MQ-10289', patient: 'Sunita Patel', test: 'Liver Function Test', sample: 'Blood', time: '3:00 PM', amount: '₹750', status: 'delivered' as const, service: 'Blood', type: 'In-Person' },
-  { id: 'MQ-10290', patient: 'Arjun Mehta', test: 'Urine Culture', sample: 'Urine', time: '4:30 PM', amount: '₹300', status: 'processing' as const, service: 'Urine', type: 'In-Person' },
-  { id: 'MQ-10291', patient: 'Kavya Nair', test: 'CBC', sample: 'Blood', time: '9:00 AM', amount: '₹300 + ₹100', status: 'collected' as const, service: 'Blood', type: 'Home Collection' },
-]
+// Lab orders come from the backend. Empty until connected.
+const allOrders: {
+  id: string; patient: string; test: string; sample: string; time: string; amount: string;
+  status: 'pending' | 'collected' | 'processing' | 'ready' | 'delivered' | 'cancelled';
+  service: string; type: string;
+}[] = []
 
 export function LabOrders() {
   const navigate = useNavigate()

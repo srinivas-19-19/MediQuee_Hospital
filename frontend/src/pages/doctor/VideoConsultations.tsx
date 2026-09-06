@@ -1,5 +1,5 @@
 import { Search, Filter, Calendar, ArrowLeft, Video, FileText } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { EmptyState } from "@/components/ui/EmptyState"
@@ -10,9 +10,9 @@ import { VideoDetailModal } from "./VideoDetailModal"
 export function VideoConsultations() {
   const [selectedConsult, setSelectedConsult] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState('upcoming');
-  const [selectedDate, setSelectedDate] = useState('14 May');
+  const [selectedDate, setSelectedDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -21,30 +21,17 @@ export function VideoConsultations() {
     { id: 'completed', label: 'Completed' },
   ];
 
-  const dates = [
-    { date: '12 May', day: 'Mon' },
-    { date: '13 May', day: 'Tue' },
-    { date: '14 May', day: 'Wed' },
-    { date: '15 May', day: 'Thu' },
-    { date: '16 May', day: 'Fri' },
-  ];
+  // Date strip — populated from backend / calendar selection. Empty until connected.
+  const dates: { date: string; day: string }[] = [];
 
-  const initialVideoList = [
-    { id: 1, mqId: "2001", patientName: "Vikram Patel", time: "11:30", period: "AM", type: "Follow Up", status: "WAITING", avatar: "V" },
-    { id: 2, mqId: "2002", patientName: "Neha Kapoor", time: "02:00", period: "PM", type: "New Patient", status: "UPCOMING", avatar: "N" },
-    { id: 3, mqId: "2003", patientName: "Sanjay Gupta", time: "04:15", period: "PM", type: "Report Review", status: "UPCOMING", avatar: "S" },
-    { id: 4, mqId: "2004", patientName: "Pooja Reddy", time: "09:00", period: "AM", type: "Follow Up", status: "COMPLETED", avatar: "P" },
-  ];
+  // Video consultation records come from the backend. Empty until connected.
+  type VideoConsult = {
+    id: number; mqId: string; patientName: string; time: string; period: string;
+    type: string; status: string; avatar: string;
+  };
+  const [videoList] = useState<VideoConsult[]>([]);
 
-  const [videoList] = useState(initialVideoList);
-
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, [selectedFilter, selectedDate]);
-
-  const filteredVideos = videoList.filter(apt => 
+  const filteredVideos = videoList.filter(apt =>
     (apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) || apt.mqId.includes(searchQuery)) &&
     (selectedFilter === 'upcoming' ? ['WAITING', 'UPCOMING', 'IN PROGRESS'].includes(apt.status) : apt.status === 'COMPLETED')
   );
@@ -188,17 +175,17 @@ export function VideoConsultations() {
         {/* Summary Block */}
         <div className="bg-white rounded-[20px] p-4 flex items-center justify-between border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
           <div className="flex flex-col items-center flex-1">
-            <span className="text-[20px] font-black text-[#0A1A3D]">5</span>
+            <span className="text-[20px] font-black text-[#0A1A3D]">—</span>
             <span className="text-[11px] font-bold text-gray-500">Today</span>
           </div>
           <div className="w-px h-10 bg-gray-100" />
           <div className="flex flex-col items-center flex-1">
-            <span className="text-[20px] font-black text-[#1B5DF1]">3</span>
+            <span className="text-[20px] font-black text-[#1B5DF1]">—</span>
             <span className="text-[11px] font-bold text-[#1B5DF1]">Upcoming</span>
           </div>
           <div className="w-px h-10 bg-gray-100" />
           <div className="flex flex-col items-center flex-1">
-            <span className="text-[20px] font-black text-emerald-500">12</span>
+            <span className="text-[20px] font-black text-emerald-500">—</span>
             <span className="text-[11px] font-bold text-emerald-500">Completed</span>
           </div>
         </div>

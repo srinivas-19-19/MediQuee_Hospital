@@ -1,5 +1,5 @@
 import { Search, Filter, Calendar } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { EmptyState } from "@/components/ui/EmptyState"
@@ -8,45 +8,28 @@ import { useNavigate } from "react-router-dom"
 
 export function ReceptionistAppointments() {
   const [selectedDept, setSelectedDept] = useState('All');
-  const [selectedDate, setSelectedDate] = useState('14 May');
+  const [selectedDate, setSelectedDate] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  const departments = [
-    { id: 'All', label: 'All Depts', ops: 54 },
-    { id: 'General Medicine', label: 'Gen Med', ops: 18 },
-    { id: 'Cardiology', label: 'Cardiology', ops: 12 },
-    { id: 'Orthopedics', label: 'Ortho', ops: 9 },
-    { id: 'Pediatrics', label: 'Pediatrics', ops: 15 },
+  // 'All' is the static default filter; the real department list and their OP
+  // counts come from the backend.
+  const departments: { id: string; label: string; ops: string }[] = [
+    { id: 'All', label: 'All Depts', ops: '—' },
   ];
 
-  const dates = [
-    { date: '12 May', day: 'Mon' },
-    { date: '13 May', day: 'Tue' },
-    { date: '14 May', day: 'Wed' },
-    { date: '15 May', day: 'Thu' },
-    { date: '16 May', day: 'Fri' },
-  ];
+  // Date strip — populated from backend / calendar selection. Empty until connected.
+  const dates: { date: string; day: string }[] = [];
 
-  const initialAppointments = [
-    { id: 1, token: "OP-104", patientName: "Rahul Sharma", time: "09:00 AM", department: "General Medicine", doctor: "Dr. Jane Smith", status: "Checked In" },
-    { id: 2, token: "OP-087", patientName: "Priya Singh", time: "09:30 AM", department: "Cardiology", doctor: "Dr. Raj Kumar", status: "Waiting" },
-    { id: 3, token: "OP-121", patientName: "Amit Kumar", time: "10:00 AM", department: "Orthopedics", doctor: "Dr. A. Verma", status: "In Consultation" },
-    { id: 4, token: "OP-105", patientName: "Sunita Devi", time: "10:30 AM", department: "General Medicine", doctor: "Dr. Jane Smith", status: "Scheduled" },
-    { id: 5, token: "OP-106", patientName: "Vikram Patel", time: "11:00 AM", department: "General Medicine", doctor: "Dr. Jane Smith", status: "Completed" },
-  ];
+  // Appointment records come from the backend. Empty until connected.
+  const appointmentsList: {
+    id: number; token: string; patientName: string; time: string;
+    department: string; doctor: string; status: string;
+  }[] = [];
 
-  const [appointmentsList] = useState(initialAppointments);
-
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, [selectedDept, selectedDate]);
-
-  const filteredAppointments = appointmentsList.filter(apt => 
+  const filteredAppointments = appointmentsList.filter(apt =>
     (selectedDept === 'All' || apt.department === selectedDept) &&
     (apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) || apt.token.toLowerCase().includes(searchQuery.toLowerCase()))
   );

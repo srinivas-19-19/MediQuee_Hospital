@@ -33,7 +33,7 @@ export function Login() {
       // Credentials are verified by the backend, which issues the session role.
       // The role selector below is not used to grant access.
       const session = await authApi.login({ email: data.email, password: data.password });
-      login(session.role);
+      login(session.token, session.role);
       if (session.role === 'lab') navigate("/lab");
       else if (session.role === 'doctor') navigate("/doctor");
       else if (session.role === 'nurse') navigate("/nurse");

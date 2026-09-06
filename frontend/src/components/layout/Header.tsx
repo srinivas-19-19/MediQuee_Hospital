@@ -5,7 +5,7 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 export function Header() {
-  const { role } = useAuth()
+  const { role, user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -26,23 +26,23 @@ export function Header() {
 
   // Role labels are static config. The account/facility name comes from the
   // backend and is unavailable until connected.
-  let greeting = "";
+  let greeting = "—";
   let subTitle = "";
 
   if (role === 'admin') {
-    greeting = "—";
+    greeting = user?.hospital?.name || user?.name || "—";
     subTitle = "HOSPITAL";
   } else if (role === 'doctor') {
-    greeting = "—";
+    greeting = user?.name ? `Dr. ${user.name}` : "—";
     subTitle = "DOCTOR";
   } else if (role === 'nurse') {
-    greeting = "—";
+    greeting = user?.name || "—";
     subTitle = "NURSE";
   } else if (role === 'receptionist') {
-    greeting = "—";
+    greeting = user?.name || "—";
     subTitle = "RECEPTIONIST";
   } else if (role === 'lab') {
-    greeting = "—";
+    greeting = user?.hospital?.name || user?.name || "—";
     subTitle = "LABORATORY";
   }
 

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 
 export function Profile() {
   const navigate = useNavigate();
-  const { logout, role } = useAuth();
+  const { logout, role, user } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
@@ -102,12 +102,11 @@ export function Profile() {
               <User className="w-7 h-7" />
             </div>
             <div className="flex flex-col">
-              {/* Name, email and designation come from the backend. Unavailable until connected. */}
               <h2 className={cn("text-[18px]", isDoctor ? "font-black text-[#0A1A3D] tracking-tight" : "font-bold text-[#172033]")}>
-                —
+                {user?.name || "—"}
               </h2>
               <p className={cn("text-[13px] font-medium", isDoctor ? "text-gray-500" : "text-[#667085]")}>
-                —
+                {user?.email || "—"}
               </p>
               <div className="mt-1.5 flex items-center">
                 {isDoctor ? (

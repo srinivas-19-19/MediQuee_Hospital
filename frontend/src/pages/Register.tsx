@@ -6,6 +6,8 @@ import { OnboardingLayout } from "./onboarding/OnboardingLayout";
 import { SuccessScreen } from "./onboarding/SuccessScreen";
 import { authApi } from "@/services/authApi";
 import { useToast } from "@/context/ToastContext";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // Shared Steps
 import { Step1Account } from "./onboarding/steps/shared/Step1Account";
@@ -43,6 +45,8 @@ export function Register() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   // Initialize form with local storage draft if available
   const methods = useForm<OnboardingFormValues>({
@@ -124,17 +128,24 @@ export function Register() {
 
   const onSubmit = async (data: OnboardingFormValues) => {
     try {
-      await authApi.register(data);
+      const response = await authApi.register(data);
       // Clear draft only once the backend has accepted the registration.
       localStorage.removeItem(DRAFT_KEY);
 
-      // Registration submitted. User must await admin verification before login.
-      setIsSuccess(true);
+      // Auto-login and redirect to dashboard
+      login(response.token, response.role);
+      
+      if (response.role === 'lab') navigate("/lab");
+      else if (response.role === 'doctor') navigate("/doctor");
+      else if (response.role === 'nurse') navigate("/nurse");
+      else if (response.role === 'receptionist') navigate("/receptionist");
+      else navigate("/dashboard");
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Unable to submit registration', 'error');
     }
   };
 
+  // We are keeping isSuccess logic for safety, but the user is immediately redirected above.
   if (isSuccess) {
     return <SuccessScreen businessType={businessType as "hospital" | "laboratory"} />;
   }

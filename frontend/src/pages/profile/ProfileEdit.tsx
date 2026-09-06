@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 export function ProfileEdit() {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
 
   const isDoctor = role === 'doctor';
   const primaryColor = isDoctor ? "bg-[#1B5DF1] hover:bg-[#1B5DF1]/90" : "bg-[#1A56DB] hover:bg-[#1A56DB]/90";
@@ -41,17 +41,17 @@ export function ProfileEdit() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">Full Name</label>
-            <input type="text" placeholder="Full name" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
+            <input type="text" defaultValue={user?.name} placeholder="Full name" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">Email Address</label>
-            <input type="email" placeholder="Email address" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
+            <input type="email" defaultValue={user?.email} disabled placeholder="Email address" className="bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 cursor-not-allowed focus:outline-none" />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">Phone Number</label>
-            <input type="tel" placeholder="Phone number" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
+            <input type="tel" defaultValue={user?.phone || ''} placeholder="Phone number" className={cn("bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1", isDoctor ? "focus:border-[#1B5DF1] focus:ring-[#1B5DF1]" : "focus:border-[#1A56DB] focus:ring-[#1A56DB]")} />
           </div>
         </div>
 

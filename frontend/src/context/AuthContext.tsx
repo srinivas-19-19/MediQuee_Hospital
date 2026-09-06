@@ -1,40 +1,111 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+// ----------------------------------------------------------------------------
+// SECURITY TRADEOFF NOTE:
+// Currently, we are storing the JWT token in `localStorage`.
+// Using `localStorage` is NOT secure against XSS (Cross-Site Scripting) attacks,
+// because any JavaScript running on the page can access the token.
+// For a production-grade application, an HTTP-only, Secure cookie should be
+// used to store session tokens to mitigate XSS risks.
+// However, given the current Vite + React SPA architecture without a BFF (Backend For Frontend),
+// localStorage provides a necessary, scoped integration point. We will keep this implementation
+// explicitly documented here rather than calling it secure.
+// ----------------------------------------------------------------------------
+
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { authApi, normalizeRole } from "../services/authApi";
 
 export type Role = 'admin' | 'doctor' | 'nurse' | 'receptionist' | 'lab';
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  designation?: string;
+  hospitalId: string;
+  hospital?: {
+    id: string;
+    name: string;
+    businessType: string;
+    facilityType?: string;
+    registrationNumber?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    addressLine1?: string;
+    area?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  };
+};
+
 type AuthContextType = {
   isAuthenticated: boolean;
-  role: Role;
-  login: (role?: Role) => void;
+  role: Role | null;
+  token: string | null;
+  user: User | null;
+  isLoading: boolean;
+  login: (token: string, role: Role) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('auth') === 'true';
-  });
-  
-  const [role, setRole] = useState<Role>(() => {
-    return (localStorage.getItem('role') as Role) || 'admin';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [role, setRole] = useState<Role | null>(null);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('mediquee_token'));
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const login = (selectedRole: Role = 'admin') => {
+  // Validate token on mount
+  useEffect(() => {
+    const validateToken = async () => {
+      const storedToken = localStorage.getItem('mediquee_token');
+      if (!storedToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const fetchedUser = await authApi.getMe(storedToken);
+        setToken(storedToken);
+        // The backend determines the authoritative role
+        const backendRole = normalizeRole(fetchedUser.role);
+        setRole(backendRole);
+        setUser(fetchedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Token validation failed:", error);
+        logout(); // clear invalid state
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    validateToken();
+  }, []);
+
+  const login = (newToken: string, newRole: Role) => {
     setIsAuthenticated(true);
-    setRole(selectedRole);
-    localStorage.setItem('auth', 'true');
-    localStorage.setItem('role', selectedRole);
+    setRole(newRole);
+    setToken(newToken);
+    localStorage.setItem('mediquee_token', newToken);
+    
+    // Fetch user details proactively to avoid waiting for reload
+    authApi.getMe(newToken).then(u => setUser(u)).catch(console.error);
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('auth');
-    localStorage.removeItem('role');
+    setRole(null);
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('mediquee_token');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, role, token, user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -47,4 +118,3 @@ export function useAuth() {
   }
   return context;
 }
-

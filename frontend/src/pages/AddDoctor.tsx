@@ -1,5 +1,5 @@
-import { Camera, ArrowLeft, Loader2 } from "lucide-react"
-import { useState } from "react"
+import { Camera, ArrowLeft, Loader2, Clock } from "lucide-react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useForm } from "react-hook-form"
@@ -8,13 +8,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
-import { ConditionSelector } from "@/components/shared/ConditionSelector"
+import { SuccessModal } from "@/components/ui/SuccessModal"
 import { adminApi } from "@/services/adminApi"
 
 const doctorSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
-  email: z.string().email("Please enter a valid email address").optional().or(z.literal('')),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   specialization: z.string().min(2, "Specialization is required"),
   experience: z.string().min(1, "Experience is required"),
   licenseNumber: z.string().min(4, "License number is required"),
@@ -33,17 +34,35 @@ export function AddDoctor() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const { register, handleSubmit, trigger, getValues, setValue, watch, formState: { errors, isDirty } } = useForm<DoctorFormValues>({
     resolver: zodResolver(doctorSchema),
     mode: "onChange",
   });
   
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    adminApi.getDepartments().then(setDepartments).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (startTime && endTime) {
+      setValue("shiftTiming", `${startTime} - ${endTime}`, { shouldValidate: true });
+    }
+  }, [startTime, endTime, setValue]);
+
   const selectedSpec = watch("specialization");
+  const availableDays = watch("availableDays") || "";
+  const daysList = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const nextStep = async () => {
     let fieldsToValidate: any[] = [];
-    if (step === 1) fieldsToValidate = ["fullName", "mobile", "email"];
+    if (step === 1) fieldsToValidate = ["fullName", "mobile", "email", "password"];
     if (step === 2) fieldsToValidate = ["specialization", "experience", "licenseNumber", "consultationFee"];
     if (step === 3) fieldsToValidate = ["availableDays", "shiftTiming"];
 
@@ -58,10 +77,19 @@ export function AddDoctor() {
   }
 
   const onSubmit = async (data: DoctorFormValues) => {
+    if (step !== 4) return;
     setIsSubmitting(true);
     try {
-      await adminApi.createDoctor(data);
-      navigate(-1);
+      await adminApi.createStaff({
+        name: data.fullName,
+        email: data.email,
+        password: data.password,
+        phone: data.mobile,
+        avatar: photoPreview,
+        role: 'DOCTOR',
+        departmentId: data.specialization // Specialization field holds the departmentId
+      });
+      setShowSuccess(true);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Unable to add doctor', "error");
     } finally {
@@ -119,15 +147,43 @@ export function AddDoctor() {
         </div>
 
         {step === 1 && (
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border border-dashed border-primary/40 text-primary cursor-pointer hover:bg-blue-100 transition-colors interactive-element shadow-sm">
-              <Camera className="w-7 h-7" strokeWidth={1.5} />
-            </div>
-            <span className="text-[13px] font-semibold text-primary cursor-pointer interactive-element px-3 py-1 rounded-full hover:bg-blue-50">Upload Photo</span>
+          <div className="flex flex-col items-center gap-3 mb-8 relative">
+            <input type="file" accept="image/*" id="photo-upload" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => setPhotoPreview(reader.result as string);
+                reader.readAsDataURL(file);
+              }
+            }} />
+            <label htmlFor="photo-upload" className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border border-dashed border-primary/40 text-primary cursor-pointer hover:bg-blue-100 transition-colors interactive-element shadow-sm overflow-hidden relative group">
+              {photoPreview ? (
+                <>
+                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                </>
+              ) : (
+                <Camera className="w-7 h-7" strokeWidth={1.5} />
+              )}
+            </label>
+            <label htmlFor="photo-upload" className="text-[13px] font-semibold text-primary cursor-pointer interactive-element px-3 py-1 rounded-full hover:bg-blue-50">
+              {photoPreview ? 'Change Photo' : 'Upload Photo (Optional)'}
+            </label>
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col gap-5">
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (step < 4) nextStep();
+            }
+          }}
+          className="w-full flex flex-col gap-5"
+        >
           <AnimatePresence mode="wait">
             {/* Step 1: Personal Info */}
             {step === 1 && (
@@ -161,7 +217,7 @@ export function AddDoctor() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#172033]">Email Address</label>
+                  <label className="text-[13px] font-semibold text-[#172033]">Email Address <span className="text-destructive">*</span></label>
                   <input 
                     {...register("email")}
                     type="email" 
@@ -173,6 +229,20 @@ export function AddDoctor() {
                   />
                   {errors.email && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.email.message}</span>}
                 </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#172033]">Password <span className="text-destructive">*</span></label>
+                  <input 
+                    {...register("password")}
+                    type="password" 
+                    placeholder="Create a password" 
+                    className={cn(
+                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
+                      errors.password ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                    )}
+                  />
+                  {errors.password && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.password.message}</span>}
+                </div>
               </motion.div>
             )}
 
@@ -180,15 +250,20 @@ export function AddDoctor() {
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-3">
-                  <label className="text-[13px] font-semibold text-[#172033]">Specialization <span className="text-destructive">*</span></label>
-                  <ConditionSelector 
-                    type="specialization" 
-                    value={selectedSpec} 
-                    onChange={(val) => setValue("specialization", val, { shouldValidate: true })} 
-                    error={!!errors.specialization}
-                  />
-                  {/* Hidden input to keep form integration intact */}
-                  <input type="hidden" {...register("specialization")} />
+                  <label className="text-[13px] font-semibold text-[#172033]">Department / Specialization <span className="text-destructive">*</span></label>
+                  <select
+                    {...register("specialization")}
+                    className={cn(
+                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] shadow-sm appearance-none",
+                      errors.specialization ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20',
+                      !selectedSpec && 'text-[#98A2B3]'
+                    )}
+                  >
+                    <option value="" disabled>Select a department</option>
+                    {departments.map(dept => (
+                      <option key={dept.id} value={dept.id} className="text-[#172033]">{dept.name}</option>
+                    ))}
+                  </select>
                   {errors.specialization && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.specialization.message}</span>}
                 </div>
 
@@ -239,31 +314,63 @@ export function AddDoctor() {
             {/* Step 3: Availability */}
             {step === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-5">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-semibold text-[#172033]">Available Days <span className="text-destructive">*</span></label>
-                  <input 
-                    {...register("availableDays")}
-                    type="text" 
-                    placeholder="e.g. Mon, Wed, Fri" 
-                    className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
-                      errors.availableDays ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )}
-                  />
+                  <div className="flex flex-wrap gap-2">
+                    {daysList.map(day => {
+                      const isSelected = availableDays.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            const current = availableDays ? availableDays.split(',') : [];
+                            const updated = isSelected ? current.filter(d => d !== day) : [...current, day];
+                            setValue("availableDays", updated.join(','), { shouldValidate: true });
+                          }}
+                          className={cn(
+                            "px-4 py-2 rounded-xl text-[14px] font-semibold border transition-all shadow-sm",
+                            isSelected ? "bg-primary text-white border-primary" : "bg-white text-[#667085] border-gray-200 hover:border-primary/50"
+                          )}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Hidden input for react-hook-form validation */}
+                  <input type="hidden" {...register("availableDays")} />
                   {errors.availableDays && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.availableDays.message}</span>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#172033]">Shift Timing <span className="text-destructive">*</span></label>
-                  <input 
-                    {...register("shiftTiming")}
-                    type="text" 
-                    placeholder="e.g. 09:00 AM - 05:00 PM" 
-                    className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
-                      errors.shiftTiming ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )}
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                      <input 
+                        type="time" 
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className={cn(
+                          "w-full px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] shadow-sm",
+                          errors.shiftTiming ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                        )}
+                      />
+                    </div>
+                    <span className="text-[#667085] font-medium">to</span>
+                    <div className="relative flex-1">
+                      <input 
+                        type="time" 
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className={cn(
+                          "w-full px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] shadow-sm",
+                          errors.shiftTiming ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                        )}
+                      />
+                    </div>
+                  </div>
+                  <input type="hidden" {...register("shiftTiming")} />
                   {errors.shiftTiming && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.shiftTiming.message}</span>}
                 </div>
               </motion.div>
@@ -287,8 +394,8 @@ export function AddDoctor() {
                 <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
                   <h3 className="font-bold text-[#172033] border-b border-gray-50 pb-2 text-[15px]">Professional Info</h3>
                   <div className="grid grid-cols-[100px_1fr] gap-y-2 text-[14px]">
-                    <span className="text-[#667085]">Specialization</span>
-                    <span className="font-semibold text-[#172033]">{values.specialization}</span>
+                    <span className="text-[#667085]">Department</span>
+                    <span className="font-semibold text-[#172033]">{departments.find(d => d.id === values.specialization)?.name || values.specialization}</span>
                     <span className="text-[#667085]">Experience</span>
                     <span className="font-semibold text-[#172033]">{values.experience} years</span>
                     <span className="text-[#667085]">License</span>
@@ -356,6 +463,16 @@ export function AddDoctor() {
         cancelLabel="Keep Editing"
         isDestructive={true}
         onConfirm={() => navigate(-1)}
+      />
+
+      <SuccessModal
+        isOpen={showSuccess}
+        title="Doctor Added"
+        description={`${values.fullName} has been successfully added to your hospital staff.`}
+        onClose={() => {
+          setShowSuccess(false);
+          navigate(-1);
+        }}
       />
     </div>
   )

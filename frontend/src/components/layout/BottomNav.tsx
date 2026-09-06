@@ -8,7 +8,7 @@ export function BottomNav({ onQuickAdd }: { onQuickAdd: () => void }) {
   const { role } = useAuth()
 
   // Hide bottom nav on form pages that have their own fixed bottom buttons
-  const hideOnRoutes = ['/add-department', '/add-doctor', '/add-lab', '/add-nurse', '/add-receptionist'];
+  const hideOnRoutes = ['/add-department', '/edit-department', '/add-doctor', '/add-lab', '/add-nurse', '/add-receptionist'];
   if (hideOnRoutes.some(route => location.pathname.startsWith(route))) {
     return null;
   }

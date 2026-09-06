@@ -1,9 +1,17 @@
 import { NavLink, useLocation } from "react-router-dom"
-import { LayoutGrid, Calendar, IndianRupee, User, Plus, Video, Home, Users, Activity } from "lucide-react"
+import { LayoutGrid, Calendar, IndianRupee, User, Plus, Video, Home, Users, Activity, X } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { cn } from "@/lib/utils"
 
-export function SideNav({ onQuickAdd }: { onQuickAdd: () => void }) {
+export function SideNav({ 
+  onQuickAdd,
+  isOpen,
+  onClose
+}: { 
+  onQuickAdd: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
   const location = useLocation()
   const { role } = useAuth()
 
@@ -46,13 +54,28 @@ export function SideNav({ onQuickAdd }: { onQuickAdd: () => void }) {
   const links = getLinks();
 
   return (
-    <div className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 h-screen sticky top-0 p-4 shrink-0 shadow-sm z-50">
-      
-      <div className="text-[#0A1A3D] font-bold text-xl flex items-center gap-2 mb-8 px-4 pt-4">
-        <Activity className="w-8 h-8 text-[#1A56DB]" /> {displayName}
-      </div>
+    <>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-[#0A1A3D]/20 z-40 hidden md:block backdrop-blur-[2px] transition-opacity" 
+          onClick={onClose}
+        />
+      )}
+      <div className={cn(
+        "hidden md:flex flex-col w-[280px] bg-white border-r border-gray-100 h-screen fixed top-0 left-0 p-4 shadow-2xl z-50 transition-transform duration-300 ease-[0.22,1,0.36,1]",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        
+        <div className="flex items-center justify-between mb-8 px-4 pt-4">
+          <div className="text-[#0A1A3D] font-bold text-[22px] flex items-center gap-2 tracking-tight">
+            <Activity className="w-8 h-8 text-[#1A56DB]" /> MediQuee
+          </div>
+          <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-[#0A1A3D] transition-colors rounded-full hover:bg-gray-50">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-      <nav className="flex flex-col gap-2 flex-1">
+        <nav className="flex flex-col gap-2 flex-1">
         {links.map((link) => {
           const Icon = link.icon;
           return (
@@ -87,6 +110,7 @@ export function SideNav({ onQuickAdd }: { onQuickAdd: () => void }) {
           </button>
         </div>
       ) : null}
-    </div>
+      </div>
+    </>
   )
 }

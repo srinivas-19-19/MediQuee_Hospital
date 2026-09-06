@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils"
 const labSchema = z.object({
   name: z.string().min(2, "Laboratory Name must be at least 2 characters"),
   code: z.string().min(2, "Lab Code must be at least 2 characters"),
+  email: z.string().email("Valid email address required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   phone: z.string().min(10, "Contact Number must be at least 10 digits"),
 });
 
@@ -32,7 +34,21 @@ export function AddLab() {
   const onSubmit = async (data: LabFormValues) => {
     setIsSubmitting(true);
     try {
-      await adminApi.createLab({ ...data, services });
+      const dept = await adminApi.createDepartment({ 
+        name: data.name,
+        code: data.code,
+        description: services.length > 0 ? `Laboratory Services - ${services.join(', ')}` : 'Laboratory Services',
+      });
+      
+      await adminApi.createStaff({
+        name: `${data.name} Admin`,
+        email: data.email,
+        password: data.password,
+        phone: data.phone,
+        role: 'LAB_ADMIN',
+        departmentId: dept.id,
+      });
+
       navigate(-1);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Unable to add laboratory', "error");
@@ -113,6 +129,34 @@ export function AddLab() {
                 <Plus className="w-3.5 h-3.5" /> Add Service
               </button>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-semibold text-[#172033]">Email Address <span className="text-destructive">*</span></label>
+            <input 
+              {...register("email")}
+              type="email" 
+              placeholder="e.g. lab@hospital.com" 
+              className={cn(
+                "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
+                errors.email ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
+              )}
+            />
+            {errors.email && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.email.message}</span>}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-semibold text-[#172033]">Password <span className="text-destructive">*</span></label>
+            <input 
+              {...register("password")}
+              type="text" 
+              placeholder="Create a password" 
+              className={cn(
+                "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
+                errors.password ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
+              )}
+            />
+            {errors.password && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.password.message}</span>}
           </div>
 
           <div className="flex flex-col gap-1.5">

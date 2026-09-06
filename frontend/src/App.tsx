@@ -28,6 +28,7 @@ import { Payouts } from "./pages/Payouts"
 import { Patients } from "./pages/Patients"
 import { Profile } from "./pages/Profile"
 import { AddDepartment } from "./pages/AddDepartment"
+import { EditDepartment } from "./pages/EditDepartment"
 import { AddDoctor } from "./pages/AddDoctor"
 import { AddLab } from "./pages/AddLab"
 import { AddNurse } from "./pages/AddNurse"
@@ -39,6 +40,8 @@ import { Security } from "./pages/Security"
 import { HospitalInfo } from "./pages/profile/HospitalInfo"
 import { StaffManagement } from "./pages/profile/StaffManagement"
 import { StaffList } from "./pages/profile/StaffList"
+import { EditStaff } from "./pages/profile/EditStaff"
+import { AddLabStaff } from "./pages/AddLabStaff"
 import { DepartmentsList } from "./pages/profile/DepartmentsList"
 import { PermissionsList } from "./pages/profile/PermissionsList"
 import { HelpSupport } from "./pages/profile/HelpSupport"
@@ -122,10 +125,12 @@ function AnimatedRoutes() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/payouts" element={<Payouts />} />
             <Route path="/add-department" element={<AddDepartment />} />
+            <Route path="/edit-department/:id" element={<EditDepartment />} />
             <Route path="/add-doctor" element={<AddDoctor />} />
             <Route path="/add-lab" element={<AddLab />} />
             <Route path="/add-nurse" element={<AddNurse />} />
             <Route path="/add-receptionist" element={<AddReceptionist />} />
+            <Route path="/edit-staff/:id" element={<EditStaff />} />
           </Route>
 
           {/* Shared / Marketing Routes */}
@@ -165,6 +170,7 @@ function AnimatedRoutes() {
           <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/profile/hospital" element={<HospitalInfo />} />
           <Route path="/profile/staff" element={<StaffManagement />} />
+          <Route path="/profile/staff/add-lab" element={<AddLabStaff />} />
           <Route path="/profile/staff/:type" element={<StaffList />} />
           <Route path="/profile/departments" element={<DepartmentsList />} />
           <Route path="/profile/permissions" element={<PermissionsList />} />

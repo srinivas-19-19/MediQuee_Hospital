@@ -1,4 +1,4 @@
-import { Camera, ArrowLeft, Loader2, Check } from "lucide-react"
+import { Users, ArrowLeft, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -11,43 +11,34 @@ import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
 import { SuccessModal } from "@/components/ui/SuccessModal"
 import { adminApi } from "@/services/adminApi"
 
-const nurseSchema = z.object({
+const labStaffSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   qualification: z.string().min(2, "Qualification is required"),
   experience: z.string().min(1, "Experience is required"),
-  licenseNumber: z.string().optional(),
-  department: z.string().min(2, "Department is required"),
-  shiftType: z.string().min(2, "Shift type is required"),
-  homeNursing: z.boolean().optional(),
 });
 
-type NurseFormValues = z.infer<typeof nurseSchema>;
+type LabStaffFormValues = z.infer<typeof labStaffSchema>;
 
-export function AddNurse() {
+export function AddLabStaff() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  const { register, handleSubmit, trigger, getValues, watch, setValue, formState: { errors, isDirty } } = useForm<NurseFormValues>({
-    resolver: zodResolver(nurseSchema),
+  const { register, handleSubmit, trigger, getValues, formState: { errors, isDirty } } = useForm<LabStaffFormValues>({
+    resolver: zodResolver(labStaffSchema),
     mode: "onChange",
-    defaultValues: {
-      homeNursing: false
-    }
   });
 
   const nextStep = async () => {
     let fieldsToValidate: any[] = [];
     if (step === 1) fieldsToValidate = ["fullName", "mobile", "email", "password"];
-    if (step === 2) fieldsToValidate = ["qualification", "experience", "licenseNumber", "department"];
-    if (step === 3) fieldsToValidate = ["shiftType", "homeNursing"];
+    if (step === 2) fieldsToValidate = ["qualification", "experience"];
 
     const isStepValid = await trigger(fieldsToValidate as any);
     if (isStepValid) {
@@ -59,7 +50,7 @@ export function AddNurse() {
     setStep(s => s - 1);
   }
 
-  const onSubmit = async (data: NurseFormValues) => {
+  const onSubmit = async (data: LabStaffFormValues) => {
     if (step !== 4) return;
     setIsSubmitting(true);
     try {
@@ -68,13 +59,12 @@ export function AddNurse() {
         email: data.email,
         password: data.password,
         phone: data.mobile,
-        avatar: photoPreview,
-        role: 'NURSE',
+        role: 'LAB_ADMIN',
         designation: data.qualification // Store rich info in designation for now
       });
       setShowSuccess(true);
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Unable to add nurse', "error");
+      toast(error instanceof Error ? error.message : 'Unable to add lab staff', "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +79,6 @@ export function AddNurse() {
   }
 
   const values = getValues();
-  const homeNursing = watch("homeNursing");
 
   return (
     <div className="flex flex-col bg-background min-h-screen">
@@ -99,7 +88,7 @@ export function AddNurse() {
         <button onClick={handleBack} className="p-2 -ml-2 text-[#172033] interactive-element rounded-full hover:bg-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-[18px] font-bold text-[#172033]">Add Nurse</h1>
+        <h1 className="text-[18px] font-bold text-[#172033]">Add Lab Staff</h1>
       </div>
 
       <div className="flex flex-col px-4 pt-6 pb-28 overflow-y-auto w-full max-w-md mx-auto">
@@ -107,9 +96,9 @@ export function AddNurse() {
         {/* Progress Bar */}
         <div className="w-full flex items-center justify-between mb-8 px-2 relative">
           <div className="absolute top-4 left-[10%] right-[10%] h-[2px] bg-gray-200/60 -z-10 rounded-full" />
-          <div className="absolute top-4 left-[10%] right-[10%] h-[2px] bg-primary -z-10 transition-all duration-300 rounded-full" style={{ width: `${((step - 1) / 3) * 100}%` }} />
+          <div className="absolute top-4 left-[10%] right-[10%] h-[2px] bg-primary -z-10 transition-all duration-300 rounded-full" style={{ width: `${((step - 1) / 2) * 100}%` }} />
 
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="flex flex-col items-center gap-2 bg-background">
               <div className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold border-2 transition-colors duration-300 shadow-sm",
@@ -123,40 +112,11 @@ export function AddNurse() {
               )}>
                 {i === 1 && "Personal"}
                 {i === 2 && "Professional"}
-                {i === 3 && "Availability"}
-                {i === 4 && "Review"}
+                {i === 3 && "Review"}
               </span>
             </div>
           ))}
         </div>
-
-        {step === 1 && (
-          <div className="flex flex-col items-center gap-3 mb-8 relative">
-            <input type="file" accept="image/*" id="photo-upload" className="hidden" onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => setPhotoPreview(reader.result as string);
-                reader.readAsDataURL(file);
-              }
-            }} />
-            <label htmlFor="photo-upload" className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border border-dashed border-primary/40 text-primary cursor-pointer hover:bg-blue-100 transition-colors interactive-element shadow-sm overflow-hidden relative group">
-              {photoPreview ? (
-                <>
-                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-6 h-6 text-white" />
-                  </div>
-                </>
-              ) : (
-                <Camera className="w-7 h-7" strokeWidth={1.5} />
-              )}
-            </label>
-            <label htmlFor="photo-upload" className="text-[13px] font-semibold text-primary cursor-pointer interactive-element px-3 py-1 rounded-full hover:bg-blue-50">
-              {photoPreview ? 'Change Photo' : 'Upload Photo (Optional)'}
-            </label>
-          </div>
-        )}
 
         <form 
           onSubmit={handleSubmit(onSubmit)} 
@@ -169,7 +129,6 @@ export function AddNurse() {
           className="w-full flex flex-col gap-5"
         >
           <AnimatePresence mode="wait">
-            
             {/* Step 1: Personal Info */}
             {step === 1 && (
               <motion.div key="step1" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-5">
@@ -178,14 +137,15 @@ export function AddNurse() {
                   <input 
                     {...register("fullName")}
                     type="text" 
-                    placeholder="e.g. Sarah Smith" 
+                    placeholder="e.g. John Lab" 
                     className={cn(
                       "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
                       errors.fullName ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )} 
+                    )}
                   />
                   {errors.fullName && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.fullName.message}</span>}
                 </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#172033]">Mobile Number <span className="text-destructive">*</span></label>
                   <input 
@@ -195,16 +155,17 @@ export function AddNurse() {
                     className={cn(
                       "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
                       errors.mobile ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )} 
+                    )}
                   />
                   {errors.mobile && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.mobile.message}</span>}
                 </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#172033]">Email Address <span className="text-destructive">*</span></label>
                   <input 
                     {...register("email")}
                     type="email" 
-                    placeholder="e.g. nurse@hospital.com" 
+                    placeholder="e.g. lab@hospital.com" 
                     className={cn(
                       "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
                       errors.email ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
@@ -237,14 +198,15 @@ export function AddNurse() {
                   <input 
                     {...register("qualification")}
                     type="text" 
-                    placeholder="e.g. B.Sc Nursing" 
+                    placeholder="e.g. B.Sc MLT" 
                     className={cn(
                       "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
                       errors.qualification ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )} 
+                    )}
                   />
                   {errors.qualification && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.qualification.message}</span>}
                 </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#172033]">Experience (Years) <span className="text-destructive">*</span></label>
                   <input 
@@ -254,80 +216,15 @@ export function AddNurse() {
                     className={cn(
                       "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
                       errors.experience ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )} 
+                    )}
                   />
                   {errors.experience && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.experience.message}</span>}
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#172033]">License Number <span className="text-destructive">*</span></label>
-                  <input 
-                    {...register("licenseNumber")}
-                    type="text" 
-                    placeholder="e.g. RN9876" 
-                    className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
-                      errors.licenseNumber ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )} 
-                  />
-                  {errors.licenseNumber && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.licenseNumber.message}</span>}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#172033]">Department <span className="text-destructive">*</span></label>
-                  <input 
-                    {...register("department")}
-                    type="text" 
-                    placeholder="e.g. ICU" 
-                    className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
-                      errors.department ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )} 
-                  />
-                  {errors.department && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.department.message}</span>}
-                </div>
               </motion.div>
             )}
 
-            {/* Step 3: Availability */}
+            {/* Step 3: Review */}
             {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-6">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#172033]">Shift Type <span className="text-destructive">*</span></label>
-                  <select 
-                    {...register("shiftType")}
-                    className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm appearance-none",
-                      errors.shiftType ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-                    )} 
-                  >
-                    <option value="">Select Shift</option>
-                    <option value="Morning">Morning</option>
-                    <option value="Evening">Evening</option>
-                    <option value="Night">Night</option>
-                    <option value="Rotational">Rotational</option>
-                  </select>
-                  {errors.shiftType && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.shiftType.message}</span>}
-                </div>
-
-                <div 
-                  className="bg-white border border-gray-200/60 rounded-xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
-                  onClick={() => setValue("homeNursing", !homeNursing, { shouldDirty: true })}
-                >
-                  <div className="flex flex-col">
-                    <span className="text-[15px] font-semibold text-[#172033]">Home Nursing Services</span>
-                    <span className="text-[13px] text-[#667085]">Available for home visits</span>
-                  </div>
-                  <div className={cn(
-                    "w-6 h-6 rounded-md border flex items-center justify-center transition-colors",
-                    homeNursing ? "bg-primary border-primary" : "bg-gray-50 border-gray-300"
-                  )}>
-                    {homeNursing && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 4: Review */}
-            {step === 4 && (
               <motion.div key="step4" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
                   <h3 className="font-bold text-[#172033] border-b border-gray-50 pb-2 text-[15px]">Personal Info</h3>
@@ -336,34 +233,18 @@ export function AddNurse() {
                     <span className="font-semibold text-[#172033]">{values.fullName}</span>
                     <span className="text-[#667085]">Mobile</span>
                     <span className="font-semibold text-[#172033]">{values.mobile}</span>
+                    <span className="text-[#667085]">Email</span>
+                    <span className="font-semibold text-[#172033] truncate">{values.email || 'N/A'}</span>
                   </div>
                 </div>
 
                 <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
                   <h3 className="font-bold text-[#172033] border-b border-gray-50 pb-2 text-[15px]">Professional Info</h3>
                   <div className="grid grid-cols-[100px_1fr] gap-y-2 text-[14px]">
-                    <span className="text-[#667085]">Qual.</span>
+                    <span className="text-[#667085]">Qualification</span>
                     <span className="font-semibold text-[#172033]">{values.qualification}</span>
-                    <span className="text-[#667085]">Exp.</span>
+                    <span className="text-[#667085]">Experience</span>
                     <span className="font-semibold text-[#172033]">{values.experience} years</span>
-                    <span className="text-[#667085]">Dept.</span>
-                    <span className="font-semibold text-[#172033]">{values.department}</span>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
-                  <h3 className="font-bold text-[#172033] border-b border-gray-50 pb-2 text-[15px]">Availability</h3>
-                  <div className="grid grid-cols-[100px_1fr] gap-y-2 text-[14px]">
-                    <span className="text-[#667085]">Shift</span>
-                    <span className="font-semibold text-[#172033]">{values.shiftType}</span>
-                    <span className="text-[#667085]">Home</span>
-                    <span className="font-semibold text-[#172033]">
-                      {homeNursing ? (
-                        <span className="text-success">Enabled</span>
-                      ) : (
-                        <span className="text-[#98A2B3]">Disabled</span>
-                      )}
-                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -383,7 +264,7 @@ export function AddNurse() {
                 </button>
               )}
               
-              {step < 4 ? (
+              {step < 3 ? (
                 <button 
                   type="button" 
                   onClick={nextStep}
@@ -395,10 +276,10 @@ export function AddNurse() {
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="flex-[2] bg-success hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors interactive-element shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                  className="flex-[2] bg-success hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition-colors interactive-element shadow-sm flex justify-center items-center gap-2 disabled:opacity-70"
                 >
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {isSubmitting ? 'Submitting...' : 'Submit Nurse'}
+                  {isSubmitting ? 'Submitting...' : 'Submit Lab Staff'}
                 </button>
               )}
             </div>
@@ -419,7 +300,7 @@ export function AddNurse() {
 
       <SuccessModal
         isOpen={showSuccess}
-        title="Nurse Added"
+        title="Lab Staff Added"
         description={`${values.fullName} has been successfully added to your hospital staff.`}
         onClose={() => {
           setShowSuccess(false);

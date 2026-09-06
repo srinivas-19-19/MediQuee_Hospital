@@ -1,10 +1,16 @@
-import { Bell } from "lucide-react"
+import { Bell, Menu } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
-export function Header() {
+export function Header({ 
+  isSidebarOpen, 
+  onToggleSidebar 
+}: { 
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
+}) {
   const { role, user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -19,7 +25,7 @@ export function Header() {
     return path.charAt(0).toUpperCase() + path.slice(1);
   };
 
-  const hideOnRoutes = ['/add-department', '/add-doctor', '/add-lab', '/add-nurse', '/add-receptionist'];
+  const hideOnRoutes = ['/add-department', '/edit-department', '/add-doctor', '/add-lab', '/add-nurse', '/add-receptionist', '/edit-staff'];
   if (hideOnRoutes.some(route => location.pathname.startsWith(route))) {
     return null;
   }
@@ -55,6 +61,12 @@ export function Header() {
         {isDashboard ? (
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
+              <button 
+                onClick={onToggleSidebar}
+                className="hidden md:flex p-1 -ml-1 text-gray-700 hover:text-[#0A1A3D] transition-colors rounded-lg hover:bg-gray-100 mr-1"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
               <div className="text-[#0A1A3D] font-bold text-[22px] flex items-center tracking-tight">
                 MediQuee
               </div>
@@ -70,6 +82,12 @@ export function Header() {
           </div>
         ) : (
           <div className="flex items-center justify-center w-full relative h-8">
+            <button 
+              onClick={onToggleSidebar}
+              className="hidden md:flex absolute left-0 p-1 -ml-1 text-gray-700 hover:text-[#0A1A3D] transition-colors rounded-lg hover:bg-gray-100"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
             <h1 className="text-[17px] font-semibold text-[#0A1A3D]">{getScreenName()}</h1>
           </div>
         )}

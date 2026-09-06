@@ -1,17 +1,23 @@
 import { ArrowLeft, Key, ShieldAlert } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
+import { useState } from "react"
+import { ManagePermissionsSheet } from "../../components/permissions/ManagePermissionsSheet"
+import { usePermissions } from "../../hooks/usePermissions"
 
 export function PermissionsList() {
   const navigate = useNavigate();
+  const { refetch } = usePermissions();
+
+  const [selectedRole, setSelectedRole] = useState<{ id: string, name: string } | null>(null);
 
   // Role names and access levels are static role definitions.
   // Active user counts come from the backend and are unavailable until connected.
   const roles = [
-    { name: "Doctor", access: "High", users: "—" },
-    { name: "Nurse", access: "Medium", users: "—" },
-    { name: "Receptionist", access: "Medium", users: "—" },
-    { name: "Laboratory", access: "Medium", users: "—" },
+    { id: "DOCTOR", name: "Doctor", access: "High", users: "—" },
+    { id: "NURSE", name: "Nurse", access: "Medium", users: "—" },
+    { id: "RECEPTIONIST", name: "Receptionist", access: "Medium", users: "—" },
+    { id: "LAB_ADMIN", name: "Laboratory", access: "Medium", users: "—" },
   ];
 
   return (
@@ -44,13 +50,27 @@ export function PermissionsList() {
                   <span className="text-xs text-gray-500">{role.users} Active Users</span>
                 </div>
               </div>
-              <button className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+              <button 
+                onClick={() => setSelectedRole({ id: role.id, name: role.name })}
+                className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+              >
                 Manage
               </button>
             </div>
           ))}
         </motion.div>
       </div>
+
+      <ManagePermissionsSheet
+        isOpen={!!selectedRole}
+        onClose={() => setSelectedRole(null)}
+        role={selectedRole?.id || null}
+        roleName={selectedRole?.name || null}
+        onSuccess={() => {
+          // If you wanted to refresh active counts, you could do it here
+          refetch(); // Refreshes the currently logged in user's permissions, but since we are admin managing others, this is just for safety
+        }}
+      />
     </div>
   )
 }

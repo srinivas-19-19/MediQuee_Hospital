@@ -8,6 +8,7 @@ export function StaffManagement() {
   const categories = [
     { title: "Doctors", icon: User, path: "/profile/staff/doctors", color: "text-blue-600", bg: "bg-blue-50" },
     { title: "Nurses", icon: HeartPulse, path: "/profile/staff/nurses", color: "text-green-600", bg: "bg-green-50" },
+    { title: "Receptionists", icon: User, path: "/profile/staff/receptionists", color: "text-orange-600", bg: "bg-orange-50" },
     { title: "Labs", icon: TestTube2, path: "/profile/staff/labs", color: "text-purple-600", bg: "bg-purple-50" },
   ];
 

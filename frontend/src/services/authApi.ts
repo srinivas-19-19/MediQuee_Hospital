@@ -28,7 +28,7 @@ export const authApi = {
    * Authenticates a user with credentials and returns the issued session.
    * The role MUST come from the backend — it is never chosen on the client.
    */
-  async login(payload: { email: string; password: string }): Promise<Session> {
+  async login(payload: { email: string; password: string; role?: string }): Promise<Session> {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

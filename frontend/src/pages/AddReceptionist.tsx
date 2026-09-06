@@ -8,12 +8,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
+import { SuccessModal } from "@/components/ui/SuccessModal"
 import { adminApi } from "@/services/adminApi"
 
 const receptionistSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
-  email: z.string().email("Please enter a valid email address").optional().or(z.literal('')),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   qualification: z.string().min(2, "Qualification is required"),
   experience: z.string().min(1, "Experience is required"),
   languagesSpoken: z.string().min(2, "Languages are required"),
@@ -28,6 +30,8 @@ export function AddReceptionist() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const { register, handleSubmit, trigger, getValues, formState: { errors, isDirty } } = useForm<ReceptionistFormValues>({
     resolver: zodResolver(receptionistSchema),
@@ -36,7 +40,7 @@ export function AddReceptionist() {
 
   const nextStep = async () => {
     let fieldsToValidate: any[] = [];
-    if (step === 1) fieldsToValidate = ["fullName", "mobile", "email"];
+    if (step === 1) fieldsToValidate = ["fullName", "mobile", "email", "password"];
     if (step === 2) fieldsToValidate = ["qualification", "experience", "languagesSpoken", "shiftTiming"];
 
     const isStepValid = await trigger(fieldsToValidate as any);
@@ -50,10 +54,19 @@ export function AddReceptionist() {
   }
 
   const onSubmit = async (data: ReceptionistFormValues) => {
+    if (step !== 3) return;
     setIsSubmitting(true);
     try {
-      await adminApi.createReceptionist(data);
-      navigate(-1);
+      await adminApi.createStaff({
+        name: data.fullName,
+        email: data.email,
+        password: data.password,
+        phone: data.mobile,
+        avatar: photoPreview,
+        role: 'RECEPTIONIST',
+        designation: data.qualification // Store rich info in designation for now
+      });
+      setShowSuccess(true);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Unable to add receptionist', "error");
     } finally {
@@ -110,15 +123,43 @@ export function AddReceptionist() {
         </div>
 
         {step === 1 && (
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border border-dashed border-primary/40 text-primary cursor-pointer hover:bg-blue-100 transition-colors interactive-element shadow-sm">
-              <Camera className="w-7 h-7" strokeWidth={1.5} />
-            </div>
-            <span className="text-[13px] font-semibold text-primary cursor-pointer interactive-element px-3 py-1 rounded-full hover:bg-blue-50">Upload Photo</span>
+          <div className="flex flex-col items-center gap-3 mb-8 relative">
+            <input type="file" accept="image/*" id="photo-upload" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => setPhotoPreview(reader.result as string);
+                reader.readAsDataURL(file);
+              }
+            }} />
+            <label htmlFor="photo-upload" className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border border-dashed border-primary/40 text-primary cursor-pointer hover:bg-blue-100 transition-colors interactive-element shadow-sm overflow-hidden relative group">
+              {photoPreview ? (
+                <>
+                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                </>
+              ) : (
+                <Camera className="w-7 h-7" strokeWidth={1.5} />
+              )}
+            </label>
+            <label htmlFor="photo-upload" className="text-[13px] font-semibold text-primary cursor-pointer interactive-element px-3 py-1 rounded-full hover:bg-blue-50">
+              {photoPreview ? 'Change Photo' : 'Upload Photo (Optional)'}
+            </label>
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col gap-5">
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (step < 4) nextStep();
+            }
+          }}
+          className="w-full flex flex-col gap-5"
+        >
           <AnimatePresence mode="wait">
             
             {/* Step 1: Personal Info */}
@@ -151,17 +192,30 @@ export function AddReceptionist() {
                   {errors.mobile && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.mobile.message}</span>}
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-semibold text-[#172033]">Email Address</label>
+                  <label className="text-[13px] font-semibold text-[#172033]">Email Address <span className="text-destructive">*</span></label>
                   <input 
                     {...register("email")}
                     type="email" 
-                    placeholder="e.g. jane@hospital.com" 
+                    placeholder="e.g. frontdesk@hospital.com" 
                     className={cn(
                       "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
                       errors.email ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
                     )}
                   />
                   {errors.email && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.email.message}</span>}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-semibold text-[#172033]">Password <span className="text-destructive">*</span></label>
+                  <input 
+                    {...register("password")}
+                    type="password" 
+                    placeholder="Create a password" 
+                    className={cn(
+                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
+                      errors.password ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                    )}
+                  />
+                  {errors.password && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.password.message}</span>}
                 </div>
               </motion.div>
             )}
@@ -197,28 +251,37 @@ export function AddReceptionist() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#172033]">Languages Spoken <span className="text-destructive">*</span></label>
-                  <input 
+                  <select 
                     {...register("languagesSpoken")}
-                    type="text" 
-                    placeholder="e.g. English, Telugu, Hindi" 
                     className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
+                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] shadow-sm appearance-none",
                       errors.languagesSpoken ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
                     )}
-                  />
+                  >
+                    <option value="">Select languages</option>
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="English, Hindi">English & Hindi</option>
+                    <option value="Local Language">Local Language Only</option>
+                    <option value="English, Hindi, Local">English, Hindi & Local</option>
+                  </select>
                   {errors.languagesSpoken && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.languagesSpoken.message}</span>}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-semibold text-[#172033]">Shift Timing <span className="text-destructive">*</span></label>
-                  <input 
+                  <select 
                     {...register("shiftTiming")}
-                    type="text" 
-                    placeholder="e.g. 09:00 AM - 05:00 PM" 
                     className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
+                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] shadow-sm appearance-none",
                       errors.shiftTiming ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
                     )}
-                  />
+                  >
+                    <option value="">Select shift</option>
+                    <option value="Morning (08:00 AM - 04:00 PM)">Morning (08:00 AM - 04:00 PM)</option>
+                    <option value="Evening (04:00 PM - 12:00 AM)">Evening (04:00 PM - 12:00 AM)</option>
+                    <option value="Night (12:00 AM - 08:00 AM)">Night (12:00 AM - 08:00 AM)</option>
+                    <option value="General (09:00 AM - 05:00 PM)">General (09:00 AM - 05:00 PM)</option>
+                  </select>
                   {errors.shiftTiming && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.shiftTiming.message}</span>}
                 </div>
               </motion.div>
@@ -299,6 +362,16 @@ export function AddReceptionist() {
         cancelLabel="Keep Editing"
         isDestructive={true}
         onConfirm={() => navigate(-1)}
+      />
+
+      <SuccessModal
+        isOpen={showSuccess}
+        title="Receptionist Added"
+        description={`${values.fullName} has been successfully added to your hospital staff.`}
+        onClose={() => {
+          setShowSuccess(false);
+          navigate(-1);
+        }}
       />
     </div>
   )

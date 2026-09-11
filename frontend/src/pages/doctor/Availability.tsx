@@ -1,36 +1,38 @@
-import { Save, Calendar, Video, Stethoscope, ArrowLeft } from "lucide-react"
-import { useState } from "react"
+import { Save, Calendar, Video, Stethoscope, ArrowLeft, RefreshCw } from "lucide-react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
-import { doctorApi } from "@/services/doctorApi"
-
-interface DayAvailability {
-  day: string;
-  active: boolean;
-  opStartTime: string;
-  opEndTime: string;
-  videoStartTime: string;
-  videoEndTime: string;
-}
+import { doctorApi, type DayAvailability } from "@/services/doctorApi"
 
 export function Availability() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // The week structure is static UI config; the active flags and hours are the
-  // doctor's saved availability and come from the backend.
-  // BACKEND_MISSING: implement GET /api/doctors/me/availability to hydrate this.
   const [schedule, setSchedule] = useState<DayAvailability[]>([
-    { day: "Monday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
-    { day: "Tuesday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
-    { day: "Wednesday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
-    { day: "Thursday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
-    { day: "Friday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
-    { day: "Saturday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
-    { day: "Sunday", active: false, opStartTime: "", opEndTime: "", videoStartTime: "", videoEndTime: "" },
+    { day: "Monday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "14:00", videoEndTime: "18:00" },
+    { day: "Tuesday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "14:00", videoEndTime: "18:00" },
+    { day: "Wednesday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "14:00", videoEndTime: "18:00" },
+    { day: "Thursday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "14:00", videoEndTime: "18:00" },
+    { day: "Friday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "14:00", videoEndTime: "18:00" },
+    { day: "Saturday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "14:00", videoEndTime: "18:00" },
+    { day: "Sunday", active: false, opStartTime: "09:00", opEndTime: "13:00", videoStartTime: "14:00", videoEndTime: "18:00" },
   ]);
 
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    doctorApi.getAvailability()
+      .then(data => {
+        if (data && data.length > 0) {
+          setSchedule(data);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load doctor availability:", err);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const updateDay = (index: number, field: keyof DayAvailability, value: any) => {
     const newSchedule = [...schedule];
@@ -42,6 +44,7 @@ export function Availability() {
     setIsSaving(true);
     try {
       await doctorApi.updateAvailability(schedule);
+      toast("Working schedule saved successfully!", "success");
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Unable to save availability', "error");
     } finally {

@@ -1,5 +1,5 @@
 import { Search, Filter, Calendar, ArrowLeft, Play, FileText } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppointmentDetailModal } from "../../components/appointments/AppointmentDetailModal"
@@ -7,42 +7,111 @@ import { Skeleton } from "../../components/ui/Skeleton"
 import { EmptyState } from "../../components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
+import { doctorApi } from "@/services/doctorApi"
+import { adminApi } from "@/services/adminApi"
 
 export function DoctorOPs() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-  const [selectedFilter, setSelectedFilter] = useState('opd');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedDate, setSelectedDate] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const { role } = useAuth();
   const navigate = useNavigate();
 
   const filterTypes = [
+    { id: 'all', label: 'All' },
     { id: 'opd', label: 'OPD' },
     { id: 'followup', label: 'Follow Up' },
     { id: 'new', label: 'New Patient' },
-    { id: 'all', label: 'All' },
   ];
 
-  // Date strip — populated from backend / calendar selection. Empty until connected.
-  const dates: { date: string; day: string }[] = [];
+  // Dynamic 14-day date strip
+  const today = new Date();
+  const todayIso = today.toISOString().split('T')[0];
+  const dates = Array.from({ length: 14 }).map((_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    const dayStr = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+    const dateStr = `${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' })}`;
+    return { iso, date: dateStr, day: dayStr };
+  });
 
-  // OP appointment records come from the backend. Empty until connected.
+  // OP appointment records
   type DoctorAppointment = {
-    id: number; mqId: string; patientName: string; time: string; period: string;
-    type: string; doctor: string; status: string; avatar: string;
+    id: string; mqId: string; patientName: string; patientPhone?: string; time: string; period: string;
+    date: string; type: string; doctor: string; status: string; avatar: string; rawStatus: string;
   };
   const [appointmentsList, setAppointmentsList] = useState<DoctorAppointment[]>([]);
 
-  const filteredAppointments = appointmentsList.filter(apt =>
-    (apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    apt.mqId.includes(searchQuery))
-  );
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await doctorApi.getMyAppointments();
+      const mapped = (data || []).map((a: any) => {
+        const timeStr = a.slotTime || a.timeSlot || '10:00 AM';
+        const parts = timeStr.trim().split(' ');
+        return {
+          id: a.id || a.appointmentId,
+          mqId: (a.id || a.appointmentId || '').slice(0, 8).toUpperCase() || 'OP',
+          patientName: a.patientName || a.name || 'Patient',
+          patientPhone: a.patientPhone,
+          time: parts[0] || '10:00',
+          period: parts[1] || (timeStr.toUpperCase().includes('PM') ? 'PM' : 'AM'),
+          date: (a.date || '').split('T')[0],
+          type: a.diseaseName || a.opType || 'General OP',
+          doctor: a.doctorName || 'Doctor',
+          status: a.status || 'WAITING',
+          rawStatus: a.status || 'WAITING',
+          avatar: a.doctorAvatar || ''
+        };
+      });
+      setAppointmentsList(mapped);
+    } catch (err) {
+      console.error("Failed to load doctor appointments:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const updateStatus = (id: number, newStatus: string) => {
-    setAppointmentsList(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Date filtering
+  const dateFilteredAppointments = appointmentsList.filter(apt => {
+    if (selectedDate === 'upcoming') {
+      return apt.date >= todayIso;
+    }
+    if (selectedDate === 'all') {
+      return true;
+    }
+    return apt.date === selectedDate;
+  });
+
+  // Tab & search filtering
+  const filteredAppointments = dateFilteredAppointments.filter(apt => {
+    const matchesSearch = apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      apt.mqId.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    if (selectedFilter === 'opd') return !apt.type.toLowerCase().includes('video');
+    if (selectedFilter === 'followup') return apt.type.toLowerCase().includes('follow');
+    if (selectedFilter === 'new') return !apt.type.toLowerCase().includes('follow');
+    return true;
+  });
+
+  const updateStatus = async (id: string, newStatus: string) => {
+    try {
+      await adminApi.updateBookingStatus(id, newStatus);
+      setAppointmentsList(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
     setActiveDropdown(null);
   };
 
@@ -113,19 +182,38 @@ export function DoctorOPs() {
 
         {/* Date Strip */}
         <div className="flex items-center gap-3 mt-1">
-          <button className="flex items-center justify-center w-[52px] h-[52px] bg-white border border-gray-200 text-[#0A1A3D] rounded-[16px] flex-shrink-0 active:scale-95 transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <Calendar className="w-6 h-6" />
+          <button 
+            onClick={() => setSelectedDate('upcoming')}
+            title="View all upcoming consultations"
+            className="flex items-center justify-center w-[52px] h-[52px] bg-white border border-gray-200 text-[#0A1A3D] rounded-[16px] flex-shrink-0 active:scale-95 transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+          >
+            <Calendar className="w-6 h-6 text-[#1B5DF1]" />
           </button>
           <div className="flex gap-2.5 overflow-x-auto scrollbar-hide py-1 flex-1">
+            <button 
+              onClick={() => setSelectedDate('upcoming')}
+              className={cn(
+                "flex flex-col items-center justify-center min-w-[76px] h-[52px] rounded-[16px] flex-shrink-0 transition-all active:scale-95 px-3 border",
+                selectedDate === 'upcoming' 
+                  ? "bg-[#1B5DF1] text-white shadow-lg shadow-[#1B5DF1]/30 border-[#1B5DF1]" 
+                  : "bg-white border-gray-200 text-[#0A1A3D] hover:bg-gray-50"
+              )}
+            >
+              <span className={cn("text-[13px] font-bold leading-tight", selectedDate === 'upcoming' ? "text-white" : "text-[#0A1A3D]")}>Upcoming</span>
+              <span className={cn("text-[10px] font-semibold leading-tight", selectedDate === 'upcoming' ? "text-[#EBF5FF]" : "text-gray-400")}>All Dates</span>
+            </button>
+
             {dates.map((d) => {
-              const isActive = selectedDate === d.date;
+              const isActive = selectedDate === d.iso;
               return (
                 <button 
-                  key={d.date}
-                  onClick={() => setSelectedDate(d.date)}
+                  key={d.iso}
+                  onClick={() => setSelectedDate(d.iso)}
                   className={cn(
-                    "flex flex-col items-center justify-center min-w-[56px] h-[52px] rounded-[16px] flex-shrink-0 transition-all active:scale-95",
-                    isActive ? "bg-[#1B5DF1] text-white shadow-lg shadow-[#1B5DF1]/30" : "bg-white border border-gray-200 text-gray-500"
+                    "flex flex-col items-center justify-center min-w-[56px] h-[52px] rounded-[16px] flex-shrink-0 transition-all active:scale-95 border",
+                    isActive 
+                      ? "bg-[#1B5DF1] text-white shadow-lg shadow-[#1B5DF1]/30 border-[#1B5DF1]" 
+                      : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
                   )}
                 >
                   <span className={cn("text-[13px] font-bold leading-tight", isActive ? "text-white" : "text-[#0A1A3D]")}>{d.date.split(' ')[0]} {d.date.split(' ')[1]}</span>
@@ -142,28 +230,42 @@ export function DoctorOPs() {
         {/* Summary Block */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[15px] font-bold text-[#0A1A3D]">Today</h3>
-            <button className="text-[#1B5DF1] text-[13px] font-bold">Summary</button>
+            <h3 className="text-[15px] font-bold text-[#0A1A3D]">
+              {selectedDate === 'upcoming' 
+                ? 'Upcoming Consultations' 
+                : selectedDate === todayIso 
+                  ? "Today's Consultations" 
+                  : `Consultations on ${dates.find(d => d.iso === selectedDate)?.date || selectedDate}`}
+            </h3>
+            <span className="text-[#1B5DF1] text-[13px] font-bold">
+              {filteredAppointments.length} Consultations
+            </span>
           </div>
 
           <div className="bg-white rounded-[20px] p-4 flex items-center justify-between border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">{filteredAppointments.length}</span>
               <span className="text-[11px] font-bold text-gray-500">Total</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
-              <span className="text-[11px] font-bold text-gray-500">Pending</span>
+              <span className="text-[22px] font-black text-[#1B5DF1]">
+                {filteredAppointments.filter(a => a.status === 'WAITING' || a.status === 'PENDING').length}
+              </span>
+              <span className="text-[11px] font-bold text-[#1B5DF1]">Pending</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
+              <span className="text-[22px] font-black text-blue-600">
+                {filteredAppointments.filter(a => a.status === 'IN_CONSULTATION').length}
+              </span>
               <span className="text-[11px] font-bold text-gray-500">In Progress</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
+              <span className="text-[22px] font-black text-emerald-600">
+                {filteredAppointments.filter(a => a.status === 'COMPLETED').length}
+              </span>
               <span className="text-[11px] font-bold text-gray-500">Completed</span>
             </div>
           </div>
@@ -189,10 +291,15 @@ export function DoctorOPs() {
                       className="flex flex-col bg-white border border-gray-100 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
                     >
                       <div className="flex gap-4">
-                        {/* Time */}
-                        <div className="flex flex-col items-center min-w-[50px] pt-1">
+                        {/* Time & Date */}
+                        <div className="flex flex-col items-center min-w-[60px] pt-1">
                           <span className="text-[16px] font-black text-[#0A1A3D] leading-none">{apt.time}</span>
                           <span className="text-[11px] font-bold text-gray-400 mt-1">{apt.period}</span>
+                          {apt.date && (
+                            <span className="text-[9px] font-bold text-[#1B5DF1] bg-[#EBF5FF] px-1.5 py-0.5 rounded mt-1.5 text-center whitespace-nowrap">
+                              {apt.date}
+                            </span>
+                          )}
                         </div>
                         
                         <div className="flex flex-col flex-1 gap-1 border-l border-gray-100 pl-4">

@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Building2, ChevronDown, Loader2 } from "lucide-react"
+import { ArrowLeft, Building2, ChevronDown, Loader2, Search, Check } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/context/ToastContext"
 import { ConfirmationSheet } from "@/components/ui/ConfirmationSheet"
@@ -10,8 +10,7 @@ import { adminApi } from "@/services/adminApi"
 import { cn } from "@/lib/utils"
 
 const departmentSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  code: z.string().min(2, "Code must be at least 2 characters"),
+  specialtyId: z.string().min(1, "Please select a specialty"),
   description: z.string().optional(),
   status: z.enum(["active", "inactive"]),
 });
@@ -23,6 +22,31 @@ export function AddDepartment() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [specialties, setSpecialties] = useState<any[]>([]);
+  const [isLoadingSpecialties, setIsLoadingSpecialties] = useState(true);
+  const [specialtiesError, setSpecialtiesError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Filter specialties based on search query
+  const filteredSpecialties = specialties.filter(s => 
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (s.description && s.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const data = await adminApi.getSpecialties();
+        setSpecialties(data);
+      } catch (err) {
+        setSpecialtiesError("Failed to load specialties");
+      } finally {
+        setIsLoadingSpecialties(false);
+      }
+    };
+    fetchSpecialties();
+  }, []);
 
   const { register, handleSubmit, formState: { errors, isDirty } } = useForm<DepartmentFormValues>({
     resolver: zodResolver(departmentSchema),
@@ -69,32 +93,77 @@ export function AddDepartment() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-semibold text-[#172033]">Department Name <span className="text-destructive">*</span></label>
-            <input 
-              {...register("name")}
-              type="text" 
-              placeholder="e.g. Cardiology" 
+          <div className="flex flex-col gap-1.5 relative">
+            <label className="text-[13px] font-semibold text-[#172033]">Platform Specialty <span className="text-destructive">*</span></label>
+            
+            {/* Custom Searchable Dropdown Trigger */}
+            <div 
               className={cn(
-                "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm",
-                errors.name ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                "w-full px-4 py-3 bg-white border rounded-xl flex items-center justify-between cursor-pointer transition-all shadow-sm",
+                errors.specialtyId ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 hover:border-gray-300',
+                (isLoadingSpecialties || specialtiesError) && "opacity-70 bg-gray-50 cursor-not-allowed"
               )}
-            />
-            {errors.name && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.name.message}</span>}
-          </div>
+              onClick={() => {
+                if (!isLoadingSpecialties && !specialtiesError) setIsDropdownOpen(!isDropdownOpen);
+              }}
+            >
+              <span className={cn("text-[15px] truncate", !isDirty && !specialties.find(s => s.id === register("specialtyId").name) ? "text-[#98A2B3]" : "text-[#172033]")}>
+                {isLoadingSpecialties ? "Loading specialties..." : 
+                 specialtiesError ? "Failed to load specialties" :
+                 (specialties.find(s => s.id === document.getElementsByName("specialtyId")[0]?.getAttribute("value"))?.name || 
+                  specialties.find(s => s.id === register("specialtyId").value)?.name || // For initial render before selection
+                  "Search and select a specialty...")}
+              </span>
+              {isLoadingSpecialties ? <Loader2 className="w-5 h-5 animate-spin text-[#98A2B3]" /> : <ChevronDown className="w-5 h-5 text-[#98A2B3]" />}
+            </div>
+            
+            {/* Hidden actual input for react-hook-form */}
+            <input type="hidden" {...register("specialtyId")} />
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-semibold text-[#172033]">Department Code <span className="text-destructive">*</span></label>
-            <input 
-              {...register("code")}
-              type="text" 
-              placeholder="e.g. CARD" 
-              className={cn(
-                "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] placeholder:text-[#98A2B3] shadow-sm uppercase",
-                errors.code ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20'
-              )}
-            />
-            {errors.code && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.code.message}</span>}
+            {/* Dropdown Menu */}
+            {isDropdownOpen && !isLoadingSpecialties && (
+              <div className="absolute top-[100%] left-0 right-0 mt-2 bg-white border border-gray-200/60 rounded-xl shadow-lg z-50 overflow-hidden flex flex-col">
+                <div className="flex items-center px-3 py-2.5 border-b border-gray-100 bg-gray-50/50">
+                  <Search className="w-4 h-4 text-gray-400 mr-2" />
+                  <input 
+                    type="text"
+                    placeholder="Search 47+ specialties..."
+                    className="flex-1 bg-transparent outline-none text-[14px] text-[#172033] placeholder:text-gray-400"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className="max-h-[250px] overflow-y-auto py-1">
+                  {filteredSpecialties.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-[14px] text-gray-500">
+                      No specialties found matching "{searchQuery}"
+                    </div>
+                  ) : (
+                    filteredSpecialties.map((s) => (
+                      <div 
+                        key={s.id}
+                        className="px-4 py-2.5 hover:bg-blue-50/50 cursor-pointer flex items-center justify-between group transition-colors"
+                        onClick={() => {
+                          const event = { target: { name: 'specialtyId', value: s.id } };
+                          register("specialtyId").onChange(event);
+                          document.getElementsByName("specialtyId")[0]?.setAttribute("value", s.id); // Update DOM value for display logic
+                          setIsDropdownOpen(false);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-[14px] font-medium text-[#172033] group-hover:text-primary transition-colors">{s.name}</span>
+                          {s.description && <span className="text-[12px] text-gray-500 line-clamp-1">{s.description}</span>}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {errors.specialtyId && !specialtiesError && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.specialtyId.message}</span>}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -131,7 +200,7 @@ export function AddDepartment() {
               </button>
               <button 
                 type="submit" 
-                disabled={isSubmitting}
+                disabled={isSubmitting || isLoadingSpecialties || !!specialtiesError}
                 className="flex-[2] bg-primary hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3.5 rounded-xl transition-colors interactive-element flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
               >
                 {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}

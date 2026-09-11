@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, ArrowLeft, Mic, CheckCircle2, Search, Filter } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueueStateMachine } from '../../services/useQueueStateMachine';
+import { receptionistApi } from '../../services/receptionistApi';
 import { cn } from "@/lib/utils"
 
 export function QueueScreen() {
@@ -11,20 +12,23 @@ export function QueueScreen() {
   const [activeTab, setActiveTab] = useState<'WAITING' | 'IN_CONSULTATION' | 'COMPLETED'>('WAITING');
 
   const deptQuery = searchParams.get('dept');
-  const [selectedDept, setSelectedDept] = useState(deptQuery || 'All Depts');
+  const [selectedDeptId, setSelectedDeptId] = useState<string>(deptQuery || 'all');
+  
+  // Fetch real departments from the hospital's backend
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
 
-  // 'All Depts' is the static default filter; the real department list comes
-  // from the backend (receptionistApi.getDepartments).
-  const departments = ['All Depts'];
+  useEffect(() => {
+    receptionistApi.getDepartments()
+      .then(setDepartments)
+      .catch(err => console.error('Failed to load departments:', err));
+  }, []);
 
-  const { queue, updateStatus } = useQueueStateMachine(selectedDept === 'All Depts' ? undefined : selectedDept);
+  const { queue, updateStatus, refreshQueue } = useQueueStateMachine(selectedDeptId === 'all' ? undefined : selectedDeptId);
 
-  const filteredQueue = queue.filter(q => {
-    if (activeTab === 'WAITING') return q.status === 'WAITING' || q.status === 'ARRIVED';
-    if (activeTab === 'IN_CONSULTATION') return q.status === 'IN_CONSULTATION' || q.status === 'CALLED';
-    if (activeTab === 'COMPLETED') return q.status === 'COMPLETED';
-    return false;
-  });
+  // Re-fetch queue when department filter changes
+  useEffect(() => {
+    refreshQueue();
+  }, [selectedDeptId]);
 
   return (
     <div className="flex flex-col bg-gray-50/30 min-h-screen pb-[100px]">
@@ -36,24 +40,35 @@ export function QueueScreen() {
             <ArrowLeft className="w-5 h-5 text-gray-800" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-[20px] font-black text-[#0A1A3D] tracking-tight">{selectedDept} Queue</h1>
+            <h1 className="text-[20px] font-black text-[#0A1A3D] tracking-tight">{selectedDeptId === 'all' ? 'All Depts' : departments.find(d => d.id === selectedDeptId)?.name || 'All Depts'} Queue</h1>
             <span className="text-[12px] font-bold text-gray-500">OP Department</span>
           </div>
         </div>
         {/* Department Tiles */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+          <button
+            onClick={() => setSelectedDeptId('all')}
+            className={cn(
+              "px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors border",
+              selectedDeptId === 'all'
+                ? "bg-[#0A1A3D] text-white border-[#0A1A3D]" 
+                : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+            )}
+          >
+            All Depts
+          </button>
           {departments.map((dept) => (
             <button
-              key={dept}
-              onClick={() => setSelectedDept(dept)}
+              key={dept.id}
+              onClick={() => setSelectedDeptId(dept.id)}
               className={cn(
                 "px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors border",
-                selectedDept === dept 
+                selectedDeptId === dept.id 
                   ? "bg-[#0A1A3D] text-white border-[#0A1A3D]" 
                   : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
               )}
             >
-              {dept}
+              {dept.name}
             </button>
           ))}
         </div>
@@ -83,7 +98,12 @@ export function QueueScreen() {
       <div className="p-4 flex flex-col gap-4">
         <div className="flex justify-between items-center mb-1">
           <span className="text-[14px] font-bold text-[#0A1A3D]">
-            {filteredQueue.length} Patients
+            {queue.filter(q => {
+              if (activeTab === 'WAITING') return q.status === 'WAITING' || q.status === 'ARRIVED';
+              if (activeTab === 'IN_CONSULTATION') return q.status === 'IN_CONSULTATION' || q.status === 'CALLED';
+              if (activeTab === 'COMPLETED') return q.status === 'COMPLETED';
+              return false;
+            }).length} Patients
           </span>
           <div className="flex gap-2">
             <button className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500">
@@ -96,7 +116,14 @@ export function QueueScreen() {
         </div>
 
         <AnimatePresence mode="popLayout">
-          {filteredQueue.length > 0 ? filteredQueue.map((item, i) => (
+          {(() => {
+            const filteredQueue = queue.filter(q => {
+              if (activeTab === 'WAITING') return q.status === 'WAITING' || q.status === 'ARRIVED';
+              if (activeTab === 'IN_CONSULTATION') return q.status === 'IN_CONSULTATION' || q.status === 'CALLED';
+              if (activeTab === 'COMPLETED') return q.status === 'COMPLETED';
+              return false;
+            });
+            return filteredQueue.length > 0 ? filteredQueue.map((item, i) => (
             <motion.div 
               layout
               key={item.id}
@@ -120,9 +147,13 @@ export function QueueScreen() {
                 <div className="flex flex-col flex-1">
                   <h3 className="font-bold text-[17px] text-[#0A1A3D]">{item.patientName}</h3>
                   <p className="text-[13px] font-medium text-gray-500 mt-0.5">{item.doctorName}</p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Clock className="w-3.5 h-3.5 text-gray-400" />
-                    <span className="text-[12px] text-gray-500 font-bold">Arr: {item.arrivalTime}</span>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-[12px] text-gray-500 font-bold">
+                        {item.slotTime || item.timeSlot ? `Slot: ${item.slotTime || item.timeSlot}` : `Arr: ${item.arrivalTime}`}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -163,7 +194,8 @@ export function QueueScreen() {
               <h3 className="text-[16px] font-bold text-[#0A1A3D]">Queue is empty</h3>
               <p className="text-gray-500 text-[13px] font-medium mt-1">No patients in this queue status.</p>
             </motion.div>
-          )}
+          );
+          })()}
         </AnimatePresence>
       </div>
     </div>

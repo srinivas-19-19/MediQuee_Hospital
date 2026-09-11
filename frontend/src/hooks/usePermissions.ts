@@ -26,7 +26,7 @@ export function usePermissions() {
   const hasPermission = (key: string) => {
     if (!user) return false;
     // HOSPITAL_ADMIN always has full access
-    if (user.role === 'admin') return true;
+    if (user.role === 'admin' || user.role === 'HOSPITAL_ADMIN') return true;
     
     const perm = permissions.find((p: any) => p.key === key);
     return perm ? perm.enabled : false;

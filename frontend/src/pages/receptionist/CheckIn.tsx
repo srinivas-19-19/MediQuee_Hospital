@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Search, AlertCircle, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { receptionistApi, type Patient } from '../../services/receptionistApi';
 
@@ -23,6 +23,7 @@ export function CheckIn() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successToken, setSuccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     receptionistApi.getDepartments().then(setDepartments);
@@ -43,7 +44,7 @@ export function CheckIn() {
   const handleNext = () => {
     if (step === 1 && (selectedPatient || (isNewPatient && newPatientData.name && newPatientData.phone))) {
       setStep(2);
-    } else if (step === 2 && selectedDept && opType) {
+    } else if (step === 2 && selectedDept && selectedDoctor && opType) {
       setStep(3);
     }
   };
@@ -52,13 +53,14 @@ export function CheckIn() {
     setIsSubmitting(true);
     setError(null);
     try {
-      await receptionistApi.checkInPatient({
+      const result = await receptionistApi.checkInPatient({
         patientId: selectedPatient?.id,
         patientData: isNewPatient ? { ...newPatientData, age: Number(newPatientData.age) } : undefined,
         departmentId: selectedDept,
         doctorId: selectedDoctor || undefined,
         opType
       });
+      setSuccessToken(result.token);
     } catch (err: any) {
       setError(err.message || 'Failed to check in patient');
     } finally {
@@ -179,7 +181,7 @@ export function CheckIn() {
 
               {selectedDept && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Doctor (Optional)</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase">Doctor *</label>
                   <select value={selectedDoctor} onChange={e => setSelectedDoctor(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-900 bg-white outline-none focus:border-primary">
                     <option value="">Any Available Doctor</option>
                     {doctors.map(doc => <option key={doc.id} value={doc.id}>{doc.name}</option>)}
@@ -238,29 +240,54 @@ export function CheckIn() {
               )}
             </motion.div>
           )}
+
+          {/* Success State */}
+          {successToken && (
+            <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-6 py-8">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+              <div className="text-center">
+                <h2 className="text-2xl font-black text-gray-900">Patient Checked In!</h2>
+                <p className="text-gray-500 mt-1 text-sm">Token has been generated successfully</p>
+              </div>
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl px-8 py-5 text-center">
+                <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">OP Token</span>
+                <p className="text-3xl font-black text-blue-700 mt-1">{successToken}</p>
+              </div>
+              <button
+                onClick={() => navigate('/receptionist')}
+                className="w-full bg-primary text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-sm mt-4"
+              >
+                Back to Dashboard
+              </button>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
       {/* Bottom Sticky Action */}
-      <div className="sticky bottom-[80px] p-4 bg-white border-t border-gray-100 z-30">
-        {step < 3 ? (
-          <button 
-            onClick={handleNext} 
-            disabled={step === 1 && !selectedPatient && (!isNewPatient || !newPatientData.name || !newPatientData.phone)}
-            className="w-full bg-primary text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
-          >
-            Continue <ArrowRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting}
-            className="w-full bg-green-600 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm"
-          >
-            {isSubmitting ? 'Generating Token...' : 'Confirm Check-In'}
-          </button>
-        )}
-      </div>
+      {!successToken && (
+        <div className="sticky bottom-[80px] p-4 bg-white border-t border-gray-100 z-30">
+          {step < 3 ? (
+            <button 
+              onClick={handleNext} 
+              disabled={(step === 1 && !selectedPatient && (!isNewPatient || !newPatientData.name || !newPatientData.phone)) || (step === 2 && (!selectedDept || !selectedDoctor))}
+              className="w-full bg-primary text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+            >
+              Continue <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting}
+              className="w-full bg-green-600 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm"
+            >
+              {isSubmitting ? 'Generating Token...' : 'Confirm Check-In'}
+            </button>
+          )}
+        </div>
+      )}
 
     </div>
   );

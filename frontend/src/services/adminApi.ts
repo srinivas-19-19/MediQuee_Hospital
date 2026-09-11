@@ -2,7 +2,7 @@
 // ADMIN / HOSPITAL API SERVICE LAYER
 // ----------------------------------------------------------------------------
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://127.0.0.1:5000';
 
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('mediquee_token');
@@ -13,6 +13,22 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 export const adminApi = {
+  /**
+   * GET /api/v1/reference/specialties
+   * Fetch platform specialties
+   */
+  async getSpecialties(): Promise<any[]> {
+    const res = await fetch(`${API_URL}/api/v1/reference/specialties`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error?.message || 'Failed to fetch specialties');
+    }
+    const data = await res.json();
+    return data.data;
+  },
   /**
    * GET /api/v1/departments
    * Fetch hospital departments
@@ -179,4 +195,61 @@ export const adminApi = {
       throw new Error(error.error?.message || 'Failed to update permissions');
     }
   },
+
+  /**
+   * OP Bookings
+   */
+   async getTodayBookings(filters?: { date?: string; range?: string; doctorId?: string; departmentId?: string; status?: string }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filters?.date) params.append('date', filters.date);
+    if (filters?.range) params.append('range', filters.range);
+    if (filters?.doctorId) params.append('doctorId', filters.doctorId);
+    if (filters?.departmentId) params.append('departmentId', filters.departmentId);
+    if (filters?.status) params.append('status', filters.status);
+
+    const qs = params.toString();
+    const url = `${API_URL}/api/v1/hospital/bookings${qs ? `?${qs}` : ''}`;
+
+    const res = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error?.message || 'Failed to fetch bookings');
+    }
+    const data = await res.json();
+    return data.data;
+  },
+
+  async getBookings(filters?: { date?: string; range?: string; doctorId?: string; departmentId?: string; status?: string }): Promise<any[]> {
+    return this.getTodayBookings(filters);
+  },
+
+  async createWalkInBooking(payload: { departmentId: string, doctorId: string, patientName: string, patientPhone?: string, fee: number }): Promise<any> {
+    const res = await fetch(`${API_URL}/api/v1/hospital/bookings/walk-in`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error?.message || 'Failed to create walk-in booking');
+    }
+    const data = await res.json();
+    return data.data;
+  },
+
+  async updateBookingStatus(id: string, status: string): Promise<any> {
+    const res = await fetch(`${API_URL}/api/v1/hospital/bookings/${id}/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error?.message || 'Failed to update booking status');
+    }
+    const data = await res.json();
+    return data.data;
+  }
 };

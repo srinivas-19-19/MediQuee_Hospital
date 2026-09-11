@@ -1,28 +1,87 @@
-import { Video, Stethoscope, Megaphone, ChevronRight, Calendar } from "lucide-react"
-import { useState } from "react"
+import { Video, Stethoscope, Megaphone, ChevronRight, Calendar, RefreshCw, CalendarClock } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { EmptyState } from "@/components/ui/EmptyState"
+import { doctorApi } from "@/services/doctorApi"
 
 export function DoctorDashboard() {
   const navigate = useNavigate()
 
-  // Current / next patient comes from the backend queue. Null until connected.
-  const [nextPatient] = useState<{
-    name: string; age: number; gender: string; mqId: string;
-    time: string; period: string; type: string; status: string;
-  } | null>(null);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Today's schedule comes from the backend. Empty until connected.
-  const todaySchedule: {
-    id: number; name: string; mqId: string; time: string; period: string;
-    type: string; category: string; status: string;
-  }[] = [];
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await doctorApi.getMyAppointments();
+      setAppointments(data || []);
+    } catch (err) {
+      console.error("Failed to load doctor appointments:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Upcoming video consultations come from the backend. Empty until connected.
-  const upcomingVideos: {
-    id: number; name: string; mqId: string; time: string; type: string; status: string;
-  }[] = [];
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Normalized appointments
+  const normalizedAppointments = (appointments || []).map(a => ({
+    id: a.id || a.appointmentId,
+    mqId: (a.id || a.appointmentId || '').slice(0, 8).toUpperCase() || 'OP',
+    name: a.patientName || a.name || 'Patient',
+    age: a.patientAge ?? a.age ?? '--',
+    gender: a.patientGender || a.gender || 'Unknown',
+    time: a.slotTime || a.timeSlot || a.time || '10:00 AM',
+    period: (a.slotTime || a.timeSlot || a.time || '').toUpperCase().includes('PM') ? 'PM' : 'AM',
+    type: a.diseaseName || a.opType || 'General OP',
+    category: (a.opType || '').toLowerCase().includes('video') ? 'VIDEO' : 'OP',
+    status: a.status || 'WAITING',
+    date: a.date
+  }));
+
+  // Filter today's appointments
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayAppts = normalizedAppointments.filter(a => (a.date || '').startsWith(todayStr));
+  const upcomingAppts = normalizedAppointments
+    .filter(a => (a.date || '') > todayStr && a.status !== 'CANCELLED')
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  const [scheduleTab, setScheduleTab] = useState<'today' | 'upcoming'>('today');
+
+  useEffect(() => {
+    if (todayAppts.length === 0 && upcomingAppts.length > 0) {
+      setScheduleTab('upcoming');
+    }
+  }, [todayAppts.length, upcomingAppts.length]);
+
+  // Current / next patient
+  const inConsult = todayAppts.find(a => a.status === 'IN_CONSULTATION');
+  const waitingFirst = todayAppts.find(a => a.status === 'WAITING' || a.status === 'PENDING');
+  const nextPatient = inConsult || waitingFirst || null;
+  const nextUpcoming = upcomingAppts[0] || null;
+
+  // Stats
+  const todayOPsCount = todayAppts.length;
+  const pendingOPsCount = todayAppts.filter(a => a.status === 'WAITING' || a.status === 'PENDING' || a.status === 'IN_CONSULTATION').length;
+  const completedCount = todayAppts.filter(a => a.status === 'COMPLETED').length;
+  const videoCallsCount = todayAppts.filter(a => a.category === 'VIDEO').length;
+
+  const todaySchedule = todayAppts.slice(0, 10);
+  const displayedSchedule = scheduleTab === 'today' ? todaySchedule : upcomingAppts.slice(0, 10);
+  const upcomingVideos = todayAppts.filter(a => a.category === 'VIDEO');
+
+  const formatScheduleDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+    } catch {
+      return dateStr;
+    }
+  };
 
   const getStatusStyle = (status: string, category: string) => {
     if (category === 'VIDEO') return 'bg-indigo-50 text-indigo-600';
@@ -32,6 +91,8 @@ export function DoctorDashboard() {
         return 'bg-[#EBF5FF] text-[#1B5DF1]';
       case 'UPCOMING':
         return 'bg-gray-100 text-gray-600';
+      case 'COMPLETED':
+        return 'bg-emerald-50 text-emerald-600';
       default:
         return 'bg-gray-100 text-gray-600';
     }
@@ -52,6 +113,33 @@ export function DoctorDashboard() {
             </span>
           </div>
         </div>
+        <button
+          onClick={loadData}
+          disabled={isLoading}
+          className="p-2 rounded-xl bg-white border border-gray-100 shadow-sm text-gray-500 hover:text-[#1B5DF1] hover:border-[#1B5DF1]/30 transition-all active:scale-95 disabled:opacity-50"
+          title="Refresh appointments"
+        >
+          <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin text-[#1B5DF1]")} />
+        </button>
+      </div>
+
+      {/* Doctor Availability Configuration Quick Action */}
+      <div 
+        onClick={() => navigate('/doctor/availability')}
+        className="bg-white border border-blue-100/80 hover:border-[#1B5DF1]/40 rounded-[20px] p-4 flex items-center justify-between cursor-pointer shadow-sm hover:shadow transition-all active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-[#EBF5FF] flex items-center justify-center shrink-0 text-[#1B5DF1]">
+            <CalendarClock className="w-6 h-6" />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="text-[#0A1A3D] font-bold text-[15px]">Consultation Hours & Availability</h3>
+            <p className="text-gray-500 text-[12px] font-medium">Set your weekly schedule and slot durations</p>
+          </div>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </div>
       </div>
 
       {/* Current / Next Patient Contextual Card */}
@@ -60,7 +148,7 @@ export function DoctorDashboard() {
 
         <div className="relative z-10 flex items-center justify-between">
           <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest border border-white/10">
-            NOW CONSULTING
+            {nextPatient ? (nextPatient.status === 'IN_CONSULTATION' ? 'NOW CONSULTING' : 'NEXT PATIENT TODAY') : nextUpcoming ? 'NEXT UPCOMING APPOINTMENT' : 'CONSULTATION DESK'}
           </span>
         </div>
 
@@ -76,7 +164,7 @@ export function DoctorDashboard() {
                 <span>ID {nextPatient.mqId}</span>
               </div>
               <p className="text-[#EBF5FF] text-[13px] font-semibold mt-1">
-                {nextPatient.time} {nextPatient.period} · {nextPatient.type}
+                {nextPatient.time} · {nextPatient.type}
               </p>
             </div>
 
@@ -95,11 +183,49 @@ export function DoctorDashboard() {
               </button>
             </div>
           </>
+        ) : nextUpcoming ? (
+          <>
+            <div className="relative z-10 flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[22px] font-black tracking-tight text-white">{nextUpcoming.name}</h2>
+                <span className="bg-white/20 text-white text-[11px] font-bold px-2 py-0.5 rounded-md">
+                  {formatScheduleDate(nextUpcoming.date)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[13px] text-[#EBF5FF]/90 font-medium">
+                <span>{nextUpcoming.age} yrs</span>
+                <span className="w-1 h-1 rounded-full bg-white/50"></span>
+                <span>{nextUpcoming.gender}</span>
+                <span className="w-1 h-1 rounded-full bg-white/50"></span>
+                <span>ID {nextUpcoming.mqId}</span>
+              </div>
+              <p className="text-[#EBF5FF] text-[13px] font-semibold mt-1">
+                {nextUpcoming.time} · {nextUpcoming.type}
+              </p>
+            </div>
+
+            <div className="relative z-10 flex gap-3 mt-2">
+              <button
+                onClick={() => navigate('/patients/' + nextUpcoming.mqId)}
+                className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-3 rounded-[14px] transition-all active:scale-[0.98] text-[14px]"
+              >
+                Open Patient
+              </button>
+              <button
+                onClick={() => navigate('/doctor/ops')}
+                className="flex-1 bg-white text-[#1B5DF1] font-bold py-3 rounded-[14px] shadow-sm transition-all active:scale-[0.98] text-[14px]"
+              >
+                View in Schedule
+              </button>
+            </div>
+          </>
         ) : (
           <div className="relative z-10 flex flex-col gap-1 py-2">
-            <h2 className="text-[22px] font-black tracking-tight text-white">—</h2>
+            <h2 className="text-[22px] font-black tracking-tight text-white">
+              {isLoading ? "Loading..." : "No Active Consult"}
+            </h2>
             <p className="text-[#EBF5FF]/90 text-[13px] font-medium">
-              No patient in consultation.
+              {isLoading ? "Fetching current consultations..." : "No patient currently scheduled or waiting."}
             </p>
           </div>
         )}
@@ -108,19 +234,26 @@ export function DoctorDashboard() {
       {/* Today's Overview (Grid) */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-[20px] p-4 flex flex-col gap-1 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100">
-          <span className="text-[24px] font-black text-[#0A1A3D]">—</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[24px] font-black text-[#0A1A3D]">{isLoading ? "..." : todayOPsCount}</span>
+            {upcomingAppts.length > 0 && (
+              <span className="text-[10px] font-bold text-[#1B5DF1] bg-[#EBF5FF] px-2 py-0.5 rounded-full">
+                +{upcomingAppts.length} upcoming
+              </span>
+            )}
+          </div>
           <span className="text-[12px] font-bold text-gray-500">Today's OPs</span>
         </div>
         <div className="bg-white rounded-[20px] p-4 flex flex-col gap-1 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100">
-          <span className="text-[24px] font-black text-[#1B5DF1]">—</span>
+          <span className="text-[24px] font-black text-[#1B5DF1]">{isLoading ? "..." : pendingOPsCount}</span>
           <span className="text-[12px] font-bold text-[#1B5DF1]">Pending OPs</span>
         </div>
         <div className="bg-white rounded-[20px] p-4 flex flex-col gap-1 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100">
-          <span className="text-[24px] font-black text-emerald-500">—</span>
+          <span className="text-[24px] font-black text-emerald-500">{isLoading ? "..." : completedCount}</span>
           <span className="text-[12px] font-bold text-gray-500">Completed</span>
         </div>
         <div className="bg-white rounded-[20px] p-4 flex flex-col gap-1 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100">
-          <span className="text-[24px] font-black text-indigo-500">—</span>
+          <span className="text-[24px] font-black text-indigo-500">{isLoading ? "..." : videoCallsCount}</span>
           <span className="text-[12px] font-bold text-gray-500">Video Calls</span>
         </div>
       </div>
@@ -144,35 +277,69 @@ export function DoctorDashboard() {
         </div>
       </div>
 
-      {/* Today's Schedule Feed */}
+      {/* Schedule Feed with Today vs Upcoming Toggle */}
       <div className="flex flex-col gap-4 mt-2">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-[17px] font-bold text-[#0A1A3D] tracking-tight">
-            Today's Schedule
-          </h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setScheduleTab('today')}
+              className={`text-[14px] font-bold px-3 py-1.5 rounded-xl transition-all ${
+                scheduleTab === 'today'
+                  ? 'bg-[#0A1A3D] text-white shadow-sm'
+                  : 'text-[#667085] hover:text-[#0A1A3D] bg-white border border-gray-200'
+              }`}
+            >
+              Today ({todaySchedule.length})
+            </button>
+            <button
+              onClick={() => setScheduleTab('upcoming')}
+              className={`text-[14px] font-bold px-3 py-1.5 rounded-xl transition-all ${
+                scheduleTab === 'upcoming'
+                  ? 'bg-[#1B5DF1] text-white shadow-sm'
+                  : 'text-[#667085] hover:text-[#0A1A3D] bg-white border border-gray-200'
+              }`}
+            >
+              Upcoming ({upcomingAppts.length})
+            </button>
+          </div>
           <button 
             onClick={() => navigate('/doctor/ops')}
-            className="text-[#1B5DF1] text-[13px] font-bold"
+            className="text-[#1B5DF1] text-[13px] font-bold hover:underline"
           >
             View All
           </button>
         </div>
         
         <div className="flex flex-col bg-white rounded-[24px] border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden">
-          {todaySchedule.length === 0 ? (
-            <EmptyState icon={Calendar} title="No Schedule" description="Today's schedule will appear here once available." />
-          ) : todaySchedule.map((patient, index) => (
+          {displayedSchedule.length === 0 ? (
+            <EmptyState 
+              icon={Calendar} 
+              title={scheduleTab === 'today' ? "No Consultations Today" : "No Upcoming Consultations"} 
+              description={
+                scheduleTab === 'today' 
+                  ? upcomingAppts.length > 0 
+                    ? `No consultations today. You have ${upcomingAppts.length} upcoming consultation(s).` 
+                    : "Today's schedule will appear here once booked."
+                  : "No upcoming consultations scheduled."
+              } 
+            />
+          ) : displayedSchedule.map((patient, index) => (
             <div 
               key={patient.id} 
               onClick={() => navigate(patient.category === 'VIDEO' ? '/doctor/video-consultations' : '/doctor/ops')}
               className={cn(
                 "p-4 flex items-start gap-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors",
-                index !== todaySchedule.length - 1 ? "border-b border-gray-100" : ""
+                index !== displayedSchedule.length - 1 ? "border-b border-gray-100" : ""
               )}
             >
-              <div className="flex flex-col items-center min-w-[50px] pt-0.5">
+              <div className="flex flex-col items-center min-w-[65px] pt-0.5">
                 <span className="text-[14px] font-black text-[#0A1A3D]">{patient.time}</span>
                 <span className="text-[10px] font-bold text-[#667085]">{patient.period}</span>
+                {patient.date && (
+                  <span className="text-[9px] font-bold text-[#1B5DF1] bg-[#EBF5FF] px-1.5 py-0.5 rounded mt-1 text-center whitespace-nowrap">
+                    {formatScheduleDate(patient.date)}
+                  </span>
+                )}
               </div>
               
               <div className="flex flex-col flex-1">

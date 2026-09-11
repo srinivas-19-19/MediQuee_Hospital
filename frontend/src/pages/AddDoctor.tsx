@@ -1,4 +1,4 @@
-import { Camera, ArrowLeft, Loader2, Clock } from "lucide-react"
+import { Camera, ArrowLeft, Loader2, Clock, Search, ChevronDown } from "lucide-react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -16,7 +16,7 @@ const doctorSchema = z.object({
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  specialization: z.string().min(2, "Specialization is required"),
+  departmentId: z.string().uuid("Please select a valid department"),
   experience: z.string().min(1, "Experience is required"),
   licenseNumber: z.string().min(4, "License number is required"),
   consultationFee: z.string().min(1, "Consultation fee is required"),
@@ -42,12 +42,24 @@ export function AddDoctor() {
   });
   
   const [departments, setDepartments] = useState<any[]>([]);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Filter departments based on search query
+  const filteredDepartments = departments.filter(d => 
+    d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (d.code && d.code.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    adminApi.getDepartments().then(setDepartments).catch(console.error);
+    adminApi.getDepartments()
+      .then(setDepartments)
+      .catch(console.error)
+      .finally(() => setIsLoadingDepartments(false));
   }, []);
 
   useEffect(() => {
@@ -56,14 +68,14 @@ export function AddDoctor() {
     }
   }, [startTime, endTime, setValue]);
 
-  const selectedSpec = watch("specialization");
+  const selectedDept = watch("departmentId");
   const availableDays = watch("availableDays") || "";
   const daysList = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const nextStep = async () => {
     let fieldsToValidate: any[] = [];
     if (step === 1) fieldsToValidate = ["fullName", "mobile", "email", "password"];
-    if (step === 2) fieldsToValidate = ["specialization", "experience", "licenseNumber", "consultationFee"];
+    if (step === 2) fieldsToValidate = ["departmentId", "experience", "licenseNumber", "consultationFee"];
     if (step === 3) fieldsToValidate = ["availableDays", "shiftTiming"];
 
     const isStepValid = await trigger(fieldsToValidate as any);
@@ -85,9 +97,9 @@ export function AddDoctor() {
         email: data.email,
         password: data.password,
         phone: data.mobile,
-        avatar: photoPreview,
+        avatar: photoPreview || undefined,
         role: 'DOCTOR',
-        departmentId: data.specialization // Specialization field holds the departmentId
+        departmentId: data.departmentId
       });
       setShowSuccess(true);
     } catch (error) {
@@ -249,22 +261,77 @@ export function AddDoctor() {
             {/* Step 2: Professional Info */}
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-5">
-                <div className="flex flex-col gap-3">
-                  <label className="text-[13px] font-semibold text-[#172033]">Department / Specialization <span className="text-destructive">*</span></label>
-                  <select
-                    {...register("specialization")}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-[13px] font-semibold text-[#172033]">Assign to Department <span className="text-destructive">*</span></label>
+                  
+                  {/* Custom Searchable Dropdown Trigger */}
+                  <div 
                     className={cn(
-                      "px-4 py-3 bg-white border rounded-xl outline-none transition-all text-[15px] shadow-sm appearance-none",
-                      errors.specialization ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 focus:border-primary focus:ring-2 focus:ring-primary/20',
-                      !selectedSpec && 'text-[#98A2B3]'
+                      "w-full px-4 py-3 bg-white border rounded-xl flex items-center justify-between cursor-pointer transition-all shadow-sm",
+                      errors.departmentId ? 'border-destructive focus:ring-2 focus:ring-destructive/20' : 'border-gray-200/60 hover:border-gray-300',
+                      (isLoadingDepartments || departments.length === 0) && "opacity-70 bg-gray-50 cursor-not-allowed"
                     )}
+                    onClick={() => {
+                      if (!isLoadingDepartments && departments.length > 0) setIsDropdownOpen(!isDropdownOpen);
+                    }}
                   >
-                    <option value="" disabled>Select a department</option>
-                    {departments.map(dept => (
-                      <option key={dept.id} value={dept.id} className="text-[#172033]">{dept.name}</option>
-                    ))}
-                  </select>
-                  {errors.specialization && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.specialization.message}</span>}
+                    <span className={cn("text-[15px] truncate", !isDirty && !departments.find(d => d.id === register("departmentId").name) ? "text-[#98A2B3]" : "text-[#172033]")}>
+                      {isLoadingDepartments ? "Loading departments..." : 
+                       departments.length === 0 ? "Please add a department first" :
+                       (departments.find(d => d.id === document.getElementsByName("departmentId")[0]?.getAttribute("value"))?.name || 
+                        departments.find(d => d.id === register("departmentId").value)?.name || // For initial render before selection
+                        "Search and select department...")}
+                    </span>
+                    {isLoadingDepartments ? <Loader2 className="w-5 h-5 animate-spin text-[#98A2B3]" /> : <ChevronDown className="w-5 h-5 text-[#98A2B3]" />}
+                  </div>
+                  
+                  {/* Hidden actual input for react-hook-form */}
+                  <input type="hidden" {...register("departmentId")} />
+
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && !isLoadingDepartments && departments.length > 0 && (
+                    <div className="absolute top-[100%] left-0 right-0 mt-2 bg-white border border-gray-200/60 rounded-xl shadow-lg z-50 overflow-hidden flex flex-col">
+                      <div className="flex items-center px-3 py-2.5 border-b border-gray-100 bg-gray-50/50">
+                        <Search className="w-4 h-4 text-gray-400 mr-2" />
+                        <input 
+                          type="text"
+                          placeholder="Search departments..."
+                          className="flex-1 bg-transparent outline-none text-[14px] text-[#172033] placeholder:text-gray-400"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[250px] overflow-y-auto py-1">
+                        {filteredDepartments.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-[14px] text-gray-500">
+                            No departments found matching "{searchQuery}"
+                          </div>
+                        ) : (
+                          filteredDepartments.map((dept) => (
+                            <div 
+                              key={dept.id}
+                              className="px-4 py-2.5 hover:bg-blue-50/50 cursor-pointer flex items-center justify-between group transition-colors"
+                              onClick={() => {
+                                const event = { target: { name: 'departmentId', value: dept.id } };
+                                register("departmentId").onChange(event);
+                                document.getElementsByName("departmentId")[0]?.setAttribute("value", dept.id); // Update DOM value for display logic
+                                setIsDropdownOpen(false);
+                                setSearchQuery("");
+                              }}
+                            >
+                              <div className="flex flex-col">
+                                <span className="text-[14px] font-medium text-[#172033] group-hover:text-primary transition-colors">{dept.name}</span>
+                                {dept.code && <span className="text-[12px] text-gray-500">{dept.code}</span>}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {errors.departmentId && <span className="text-destructive text-[12px] font-medium mt-0.5">{errors.departmentId.message}</span>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -395,7 +462,7 @@ export function AddDoctor() {
                   <h3 className="font-bold text-[#172033] border-b border-gray-50 pb-2 text-[15px]">Professional Info</h3>
                   <div className="grid grid-cols-[100px_1fr] gap-y-2 text-[14px]">
                     <span className="text-[#667085]">Department</span>
-                    <span className="font-semibold text-[#172033]">{departments.find(d => d.id === values.specialization)?.name || values.specialization}</span>
+                    <span className="font-semibold text-[#172033]">{departments.find(d => d.id === values.departmentId)?.name || values.departmentId}</span>
                     <span className="text-[#667085]">Experience</span>
                     <span className="font-semibold text-[#172033]">{values.experience} years</span>
                     <span className="text-[#667085]">License</span>
@@ -435,7 +502,8 @@ export function AddDoctor() {
                 <button 
                   type="button" 
                   onClick={nextStep}
-                  className="flex-[2] bg-primary hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-colors interactive-element shadow-sm"
+                  disabled={step === 2 && departments.length === 0}
+                  className="flex-[2] bg-primary hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-colors interactive-element shadow-sm disabled:opacity-70 disabled:hover:bg-primary"
                 >
                   Next
                 </button>

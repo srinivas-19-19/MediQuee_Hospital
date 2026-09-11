@@ -1,20 +1,22 @@
-import { Search, Filter, Calendar, ArrowLeft, Play, FileText } from "lucide-react"
-import { useState } from "react"
+import { Search, Filter, Calendar, ArrowLeft, Play, FileText, Plus } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { motion, AnimatePresence } from "framer-motion"
 import { AppointmentDetailModal } from "../components/appointments/AppointmentDetailModal"
+import { WalkInModal } from "../components/appointments/WalkInModal"
 import { Skeleton } from "../components/ui/Skeleton"
 import { EmptyState } from "../components/ui/EmptyState"
 import { cn } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
+import { adminApi } from "@/services/adminApi"
 
 export function Appointments() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState('ops');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -27,23 +29,79 @@ export function Appointments() {
     { id: 'home_nursing', label: 'Home Nursing' },
   ];
 
-  // Date strip — populated from backend / calendar selection. Empty until connected.
-  const dates: { date: string; day: string }[] = [];
+  // Dynamic 14-day date strip starting from today
+  const today = new Date();
+  const todayIso = today.toISOString().split('T')[0];
+  const dates = Array.from({ length: 14 }).map((_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    const dayStr = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+    const dateStr = `${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' })}`;
+    return { iso, date: dateStr, day: dayStr };
+  });
 
-  // Appointment records come from the backend. Empty until connected.
+  // Appointment records
   type Appointment = {
-    id: number; mqId: string; patientName: string; time: string; period: string;
-    type: string; doctor: string; status: string; avatar: string;
+    id: string; mqId: string; patientName: string; patientPhone?: string; time: string; period: string;
+    date: string; type: string; doctor: string; status: string; avatar: string;
   };
   const [appointmentsList, setAppointmentsList] = useState<Appointment[]>([]);
+  const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+
+  const fetchBookings = useCallback(async (targetDate: string) => {
+    setIsLoading(true);
+    try {
+      const filters: any = {};
+      if (targetDate === 'upcoming') {
+        filters.range = 'upcoming';
+      } else if (targetDate === 'all') {
+        filters.range = 'all';
+      } else {
+        filters.date = targetDate;
+      }
+      const data = await adminApi.getBookings(filters);
+      const mapped = (data || []).map((b: any) => {
+        const timeStr = b.timeSlot || b.slotTime || new Date(b.appointmentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const parts = timeStr.trim().split(' ');
+        return {
+          id: b.id,
+          mqId: `OP-${b.id.substring(0, 6).toUpperCase()}`,
+          patientName: b.patientName || 'Patient',
+          patientPhone: b.patientPhone,
+          time: parts[0] || '10:00',
+          period: parts[1] || 'AM',
+          date: (b.appointmentDate || '').split('T')[0],
+          type: b.opType || b.condition?.name || 'Walk-In',
+          doctor: b.doctor?.name || 'Assigned Doctor',
+          status: b.status || 'WAITING',
+          avatar: b.doctor?.avatar || ''
+        };
+      });
+      setAppointmentsList(mapped);
+    } catch (err) {
+      console.error('Failed to fetch bookings:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBookings(selectedDate);
+  }, [selectedDate, fetchBookings]);
 
   const filteredAppointments = appointmentsList.filter(apt =>
     (apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    apt.mqId.includes(searchQuery))
+    apt.mqId.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const updateStatus = (id: number, newStatus: string) => {
-    setAppointmentsList(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+  const updateStatus = async (id: string, newStatus: string) => {
+    try {
+      await adminApi.updateBookingStatus(id, newStatus);
+      fetchBookings(selectedDate); // Refresh the list
+    } catch (err) {
+      console.error(err);
+    }
     setActiveDropdown(null);
   };
 
@@ -51,6 +109,7 @@ export function Appointments() {
     switch (status) {
       case 'CONFIRMED': return 'bg-emerald-50 text-emerald-500';
       case 'PENDING': return 'bg-[#EBF5FF] text-[#1B5DF1]';
+      case 'IN_CONSULTATION': return 'bg-blue-50 text-blue-600';
       case 'COMPLETED': return 'bg-[#0A1A3D] text-white';
       case 'CANCELLED': return 'bg-red-50 text-red-500';
       case 'WAITING': return 'bg-amber-50 text-amber-500';
@@ -69,7 +128,16 @@ export function Appointments() {
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#0A1A3D] hover:bg-gray-100 rounded-xl transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-[22px] font-black text-[#0A1A3D] tracking-tight">Appointments</h1>
+          <div className="flex-1">
+            <h1 className="text-[22px] font-black text-[#0A1A3D] tracking-tight">Appointments</h1>
+          </div>
+          <button 
+            onClick={() => setIsWalkInModalOpen(true)}
+            className="flex items-center gap-1.5 bg-[#1B5DF1] hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Walk-In
+          </button>
         </div>
 
         {/* Search Bar */}
@@ -112,19 +180,38 @@ export function Appointments() {
 
         {/* Date Strip */}
         <div className="flex items-center gap-3 mt-1">
-          <button className="flex items-center justify-center w-[52px] h-[52px] bg-white border border-gray-200 text-[#0A1A3D] rounded-[16px] flex-shrink-0 active:scale-95 transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <Calendar className="w-6 h-6" />
+          <button 
+            onClick={() => setSelectedDate('upcoming')}
+            title="View all upcoming appointments"
+            className="flex items-center justify-center w-[52px] h-[52px] bg-white border border-gray-200 text-[#0A1A3D] rounded-[16px] flex-shrink-0 active:scale-95 transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+          >
+            <Calendar className="w-6 h-6 text-primary" />
           </button>
           <div className="flex gap-2.5 overflow-x-auto scrollbar-hide py-1 flex-1">
+            <button 
+              onClick={() => setSelectedDate('upcoming')}
+              className={cn(
+                "flex flex-col items-center justify-center min-w-[76px] h-[52px] rounded-[16px] flex-shrink-0 transition-all active:scale-95 px-3 border",
+                selectedDate === 'upcoming' 
+                  ? "bg-[#1B5DF1] text-white shadow-lg shadow-[#1B5DF1]/30 border-[#1B5DF1]" 
+                  : "bg-white border-gray-200 text-[#0A1A3D] hover:bg-gray-50"
+              )}
+            >
+              <span className={cn("text-[13px] font-bold leading-tight", selectedDate === 'upcoming' ? "text-white" : "text-[#0A1A3D]")}>Upcoming</span>
+              <span className={cn("text-[10px] font-semibold leading-tight", selectedDate === 'upcoming' ? "text-[#EBF5FF]" : "text-gray-400")}>All Dates</span>
+            </button>
+
             {dates.map((d) => {
-              const isActive = selectedDate === d.date;
+              const isActive = selectedDate === d.iso;
               return (
                 <button 
-                  key={d.date}
-                  onClick={() => setSelectedDate(d.date)}
+                  key={d.iso}
+                  onClick={() => setSelectedDate(d.iso)}
                   className={cn(
-                    "flex flex-col items-center justify-center min-w-[56px] h-[52px] rounded-[16px] flex-shrink-0 transition-all active:scale-95",
-                    isActive ? "bg-[#1B5DF1] text-white shadow-lg shadow-[#1B5DF1]/30" : "bg-white border border-gray-200 text-gray-500"
+                    "flex flex-col items-center justify-center min-w-[56px] h-[52px] rounded-[16px] flex-shrink-0 transition-all active:scale-95 border",
+                    isActive 
+                      ? "bg-[#1B5DF1] text-white shadow-lg shadow-[#1B5DF1]/30 border-[#1B5DF1]" 
+                      : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
                   )}
                 >
                   <span className={cn("text-[13px] font-bold leading-tight", isActive ? "text-white" : "text-[#0A1A3D]")}>{d.date.split(' ')[0]} {d.date.split(' ')[1]}</span>
@@ -141,28 +228,36 @@ export function Appointments() {
         {/* Summary Block */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[15px] font-bold text-[#0A1A3D]">Today</h3>
-            <button className="text-[#1B5DF1] text-[13px] font-bold">Summary</button>
+            <h3 className="text-[15px] font-bold text-[#0A1A3D]">
+              {selectedDate === 'upcoming' 
+                ? 'Upcoming Consultations' 
+                : selectedDate === todayIso 
+                  ? "Today's Consultations" 
+                  : `Consultations on ${dates.find(d => d.iso === selectedDate)?.date || selectedDate}`}
+            </h3>
+            <span className="text-[#1B5DF1] text-[13px] font-bold">
+              {filteredAppointments.length} Bookings
+            </span>
           </div>
 
           <div className="bg-white rounded-[20px] p-4 flex items-center justify-between border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">{appointmentsList.length}</span>
               <span className="text-[11px] font-bold text-gray-500">Total</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
-              <span className="text-[11px] font-bold text-gray-500">Pending</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">{appointmentsList.filter(a => a.status === 'WAITING').length}</span>
+              <span className="text-[11px] font-bold text-gray-500">Waiting</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
-              <span className="text-[11px] font-bold text-gray-500">In Progress</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">{appointmentsList.filter(a => a.status === 'IN_CONSULTATION').length}</span>
+              <span className="text-[11px] font-bold text-gray-500">In Consult</span>
             </div>
             <div className="w-px h-10 bg-gray-100" />
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[22px] font-black text-[#0A1A3D]">—</span>
+              <span className="text-[22px] font-black text-[#0A1A3D]">{appointmentsList.filter(a => a.status === 'COMPLETED').length}</span>
               <span className="text-[11px] font-bold text-gray-500">Completed</span>
             </div>
           </div>
@@ -189,9 +284,14 @@ export function Appointments() {
                     >
                       <div className="flex gap-4">
                         {/* Time */}
-                        <div className="flex flex-col items-center min-w-[50px] pt-1">
+                        <div className="flex flex-col items-center min-w-[60px] pt-1">
                           <span className="text-[16px] font-black text-[#0A1A3D] leading-none">{apt.time}</span>
                           <span className="text-[11px] font-bold text-gray-400 mt-1">{apt.period}</span>
+                          {apt.date && (
+                            <span className="text-[10px] font-bold text-primary bg-blue-50 px-1.5 py-0.5 rounded mt-1.5 text-center whitespace-nowrap">
+                              {apt.date}
+                            </span>
+                          )}
                         </div>
                         
                         <div className="flex flex-col flex-1 gap-1 border-l border-gray-100 pl-4">
@@ -201,6 +301,8 @@ export function Appointments() {
                               <span className="text-[16px] font-bold text-[#0A1A3D]">{apt.patientName}</span>
                               <div className="flex items-center gap-1.5 mt-0.5">
                                 <span className="text-[12px] font-medium text-gray-500">ID: {apt.mqId}</span>
+                                <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                <span className="text-[12px] font-medium text-gray-500">{apt.doctor}</span>
                                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
                                 <span className="text-[12px] font-medium text-gray-500">{apt.type}</span>
                               </div>
@@ -231,7 +333,7 @@ export function Appointments() {
 
                               {activeDropdown === apt.id && (
                                 <div className="absolute top-full right-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 overflow-hidden">
-                                  {['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'WAITING'].map(status => (
+                                  {['PENDING', 'WAITING', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED'].map(status => (
                                     <button
                                       key={status}
                                       onClick={() => updateStatus(apt.id, status)}
@@ -289,6 +391,11 @@ export function Appointments() {
         isOpen={!!selectedAppointment}
         onClose={() => setSelectedAppointment(null)}
         appointment={selectedAppointment}
+      />
+      <WalkInModal 
+        isOpen={isWalkInModalOpen}
+        onClose={() => setIsWalkInModalOpen(false)}
+        onSuccess={() => fetchBookings()}
       />
     </div>
   )

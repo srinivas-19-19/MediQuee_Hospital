@@ -102,5 +102,24 @@ export const doctorApi = {
 
     const json = await res.json();
     return json.data || [];
+  },
+
+  /**
+   * GET /api/v1/appointments/:id
+   * Fetches full details for an appointment or patient booking.
+   */
+  async getAppointmentById(id: string): Promise<any> {
+    const res = await fetch(`${API_URL}/api/v1/appointments/${id}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch appointment details');
+    }
+
+    const json = await res.json();
+    return json.data;
   }
 };

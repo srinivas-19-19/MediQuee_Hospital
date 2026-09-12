@@ -170,7 +170,7 @@ export function DoctorDashboard() {
 
             <div className="relative z-10 flex gap-3 mt-2">
               <button
-                onClick={() => navigate('/patients/' + nextPatient.mqId)}
+                onClick={() => navigate('/patients/' + (nextPatient.id || nextPatient.mqId))}
                 className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-3 rounded-[14px] transition-all active:scale-[0.98] text-[14px]"
               >
                 Open Patient
@@ -206,7 +206,7 @@ export function DoctorDashboard() {
 
             <div className="relative z-10 flex gap-3 mt-2">
               <button
-                onClick={() => navigate('/patients/' + nextUpcoming.mqId)}
+                onClick={() => navigate('/patients/' + (nextUpcoming.id || nextUpcoming.mqId))}
                 className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-3 rounded-[14px] transition-all active:scale-[0.98] text-[14px]"
               >
                 Open Patient
